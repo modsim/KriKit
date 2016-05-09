@@ -1,0 +1,875 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>KrigingSuperClass</title><meta name="generator" content="MATLAB 7.11"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-11-28"><meta name="DC.source" content="KrigingSuperClass.m"><style type="text/css">
+
+body {
+  background-color: white;
+  margin:10px;
+}
+
+h1 {
+  color: #990000; 
+  font-size: x-large;
+}
+
+h2 {
+  color: #990000;
+  font-size: medium;
+}
+
+/* Make the text shrink to fit narrow windows, but not stretch too far in 
+wide windows. */ 
+p,h1,h2,div.content div {
+  max-width: 600px;
+  /* Hack for IE6 */
+  width: auto !important; width: 600px;
+}
+
+pre.codeinput {
+  background: #EEEEEE;
+  padding: 10px;
+}
+@media print {
+  pre.codeinput {word-wrap:break-word; width:100%;}
+} 
+
+span.keyword {color: #0000FF}
+span.comment {color: #228B22}
+span.string {color: #A020F0}
+span.untermstring {color: #B20000}
+span.syscmd {color: #B28C00}
+
+pre.codeoutput {
+  color: #666666;
+  padding: 10px;
+}
+
+pre.error {
+  color: red;
+}
+
+p.footer {
+  text-align: right;
+  font-size: xx-small;
+  font-weight: lighter;
+  font-style: italic;
+  color: gray;
+}
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#3">Public Members</a></li><li><a href="#4">Private Members</a></li><li><a href="#5">Protected Members</a></li><li><a href="#6">General Variables</a></li><li><a href="#7">Numbers of Variables</a></li><li><a href="#8">Distance Measurements</a></li><li><a href="#9">Radial function parameters</a></li><li><a href="#10">Universal Kriging</a></li><li><a href="#11">Genetic Algorithm</a></li><li><a href="#12">Normalization Parameters</a></li><li><a href="#14">Constructor</a></li><li><a href="#15">General Methods</a></li><li><a href="#16">Get Functions</a></li><li><a href="#17">Set Functions</a></li></ul></div><pre class="codeinput"><span class="keyword">classdef</span> KrigingSuperClass&lt;handle
+</pre><pre class="codeinput">    <span class="comment">%KRIGINGSUPERCLASS Summary of this class goes here</span>
+    <span class="comment">%   Detailed explanation goes here</span>
+</pre><h2>Public Members<a name="3"></a></h2><pre class="codeinput">    properties(GetAccess=<span class="string">'public'</span>,SetAccess=<span class="string">'public'</span>)
+    <span class="keyword">end</span>
+</pre><h2>Private Members<a name="4"></a></h2><pre class="codeinput">    properties(GetAccess=<span class="string">'private'</span>,SetAccess=<span class="string">'private'</span>)
+
+    <span class="keyword">end</span>
+</pre><h2>Protected Members<a name="5"></a></h2><pre class="codeinput">    properties(GetAccess=<span class="string">'protected'</span>,SetAccess=<span class="string">'protected'</span>)
+</pre><h2>General Variables<a name="6"></a></h2><pre class="codeinput">        <span class="comment">% Contains the Provided Parameter Set. If Normailization is</span>
+        <span class="comment">% activated this matrix conains double between 0 and 1</span>
+        InputData  = [];
+        <span class="comment">% Contains the actual Provided Parameter Set (not effected by</span>
+        <span class="comment">% normalization).</span>
+        InputData_True  = [];
+        OutputData = [];
+        OutputData_True = [];
+            <span class="comment">% 1 ... exponetial</span>
+            <span class="comment">% 2 ... exponetial with nugget (later)</span>
+        ModelChoice     = 1;
+        checkInvVariogram = 0;
+        checkInvCoVariogram = 0;
+</pre><h2>Numbers of Variables<a name="7"></a></h2><pre class="codeinput">        nExperiments    = 0;
+        nInputVar       = 0;
+        nOutputVar      = 0;
+</pre><h2>Distance Measurements<a name="8"></a></h2><pre class="codeinput">        DistInput       = [];
+        DistSquareOutput= [];
+        InvVariogram    = [];
+        Variogram       = [];
+        InvCoVariogram    = [];
+        CoVariogram       = [];
+        CoVar           = [];
+        InvCoVar        = [];
+        <span class="comment">%--------------------------------------</span>
+</pre><h2>Radial function parameters<a name="9"></a></h2><pre class="codeinput">        LowerBound = [0,0,0];
+        UpperBound = [1e10,1e10,2];
+        <span class="comment">% Exponential radial function = sigmaError + thetha*exp(-(x/sigma)^2)</span>
+        sigma=1;
+        theta=1;
+        p=2;
+        sigmaError = 1e-10;
+        ModelVarError = inf;
+        MuMaxLikelihood = 0;
+        SigmaMaxLikelihood = 0;
+</pre><h2>Universal Kriging<a name="10"></a></h2><p>The number of basis functions</p><pre class="codeinput">        nFct = 0;
+        BasisFct = {};
+</pre><h2>Genetic Algorithm<a name="11"></a></h2><p>GA-Alg.: The fraction of the population at the next generation, not including elite children, that is created by the crossover function</p><pre class="codeinput">        GACR = 0.8
+        <span class="comment">% GA-Alg.: Positive integer specifying the maximum number of iterations before the algorithm halts</span>
+        Generations = 100;
+        <span class="comment">% GA-Alg.: Scalar between 0 and 1 specifying the fraction of individuals in each subpopulation that migrates to a different subpopulation</span>
+        MigrationFraction = 0.2;
+</pre><h2>Normalization Parameters<a name="12"></a></h2><pre class="codeinput">        NormInput = 0;
+        NormOutput = 0;
+</pre><pre class="codeinput">    <span class="keyword">end</span>
+
+    methods
+</pre><h2>Constructor<a name="14"></a></h2><pre class="codeinput">        <span class="keyword">function</span> obj = KrigingSuperClass()
+        <span class="keyword">end</span>
+</pre><pre class="codeoutput">
+ans = 
+
+  KrigingSuperClass handle with no properties.
+
+</pre><h2>General Methods<a name="15"></a></h2><pre class="codeinput">        <span class="comment">%--------------------------------------</span>
+        reset(obj)
+        <span class="comment">%--------------------------------------</span>
+        <span class="comment">% Calculate the covariance using the chosen model</span>
+        covariance = CovarModel(obj,distance,varargin);
+        <span class="comment">%--------------------------------------</span>
+        <span class="comment">% Calculate the square dor absolute ifferences between all data</span>
+        calcDifference(obj);
+        <span class="comment">%--------------------------------------</span>
+        <span class="comment">% Calculate inverse of extended Variogram</span>
+        calcInverseVariogram(obj);
+        <span class="comment">%--------------------------------------</span>
+        <span class="comment">% Calculate inverse of extended CoVariogram</span>
+        calcInverseVariogramCo(obj);
+        <span class="comment">%--------------------------------------</span>
+        <span class="comment">% Solve Least Square Problem</span>
+        SQ_CoVar = LeastSquareFunction(obj,varargin);
+        <span class="comment">% Solve Least Square Problem (Local via fmincon)</span>
+        solveLeastSquare(obj);
+        <span class="comment">% Solve Least Square Problem (Global via Differential Evolution)</span>
+        solveLeastSquareDE(obj);
+        <span class="comment">% Solve Least Square Problem (Global via Differential Evolution)</span>
+        solveLeastSquareGA(obj);
+
+        [negLogLikelihood] = MaximumLikelihood(obj,varargin);
+        solveMaxLikelihood(obj);
+        <span class="comment">%--------------------------------------</span>
+        <span class="comment">% Collects the points which has to be done to calculate the</span>
+        <span class="comment">% Variogramm</span>
+        makePrework(obj);
+        <span class="comment">%--------------------------------------</span>
+        <span class="comment">% Collects the points which has to be done to calculate the</span>
+        <span class="comment">% Variogramm</span>
+        makePreworkMaxLikelihood(obj);
+        <span class="comment">% -----------------------------------------------------------------</span>
+        <span class="comment">% Prediction of the output for the given input points using the</span>
+        <span class="comment">% Variogram matrix</span>
+        [output]=prediction(obj,input);
+        <span class="comment">% ---------------------------------------------------</span>
+        <span class="comment">% Prediction of the output for the given input points</span>
+        [output]=predictionCo(obj,input);
+        <span class="comment">%--------------------------------------</span>
+        <span class="comment">% Plot Variogramm</span>
+        plotVariogram(obj);
+        <span class="comment">% ----------------------------------------------------------------</span>
+        <span class="keyword">function</span> f=scale(obj,x,minX,maxX,LB,UB)
+            <span class="comment">% f=scale(x,minX,maxX,LB,UB)</span>
+            <span class="comment">% Scales x which is a variable in the range [minX,maxX] to the</span>
+            <span class="comment">% range [LB,UB]</span>
+            f=(x-minX)/(maxX-minX)*(UB-LB)+LB;
+        <span class="keyword">end</span>
+</pre><h2>Get Functions<a name="16"></a></h2><pre class="codeinput">        <span class="keyword">function</span> [DistInput]=getDistInput(obj)
+            DistInput = obj.DistInput;
+        <span class="keyword">end</span>
+        <span class="comment">%--------------------------------------</span>
+        <span class="keyword">function</span> [DistSquareOutput]=getDistSquareOutput(obj)
+            DistSquareOutput = obj.DistSquareOutput;
+        <span class="keyword">end</span>
+        <span class="comment">%--------------------------------------</span>
+        <span class="keyword">function</span> [nInputVar]=get_nInputVar(obj)
+            nInputVar = obj.nInputVar;
+        <span class="keyword">end</span>
+        <span class="comment">%--------------------------------------</span>
+        <span class="keyword">function</span> [nExperiments]=get_nExperiments(obj)
+            nExperiments = obj.nExperiments;
+        <span class="keyword">end</span>
+        <span class="comment">%--------------------------------------</span>
+        <span class="keyword">function</span> [theta,sigma,p,sigmaError]=getModelParameters(obj)
+            theta = obj.theta;
+            sigma = obj. sigma;
+            p     = obj.p;
+            sigmaError = obj.sigmaError;
+        <span class="keyword">end</span>
+        <span class="comment">%--------------------------------------</span>
+        <span class="keyword">function</span> [ModelVarError] = getModelVarError(obj)
+            <span class="comment">% Gives the squared error after the optimization. If the error</span>
+            <span class="comment">% is equal to infinity than was most likely no optimization applied</span>
+            ModelVarError=obj.ModelVarError;
+        <span class="keyword">end</span>
+        <span class="comment">%--------------------------------------</span>
+        <span class="keyword">function</span> [Variogram] = getVariogramMatrix(obj)
+            Variogram = obj.Variogram;
+        <span class="keyword">end</span>
+        <span class="comment">%--------------------------------------</span>
+        <span class="keyword">function</span> [ModelChoice] = getModelChoice(obj)
+            ModelChoice=obj.ModelChoice;
+        <span class="keyword">end</span>
+        <span class="comment">%--------------------------------------</span>
+        <span class="keyword">function</span> [Input] = getInputData(obj)
+            Input = obj.InputData;
+        <span class="keyword">end</span>
+        <span class="comment">%------------------------------------------------------------------</span>
+        <span class="keyword">function</span> [Output] = getOutputData(obj)
+            Output = obj.OutputData;
+        <span class="keyword">end</span>
+        <span class="comment">%------------------------------------------------------------------</span>
+        <span class="keyword">function</span> [LowerBound] = getLowerBounds(obj)
+            LowerBound = obj.LowerBound;
+        <span class="keyword">end</span>
+        <span class="comment">%------------------------------------------------------------------</span>
+        <span class="keyword">function</span> [UpperBound] = getUpperBounds(obj)
+            UpperBound = obj.UpperBound;
+        <span class="keyword">end</span>
+        <span class="comment">%------------------------------------------------------------------</span>
+        <span class="keyword">function</span> [CoVariance]=getCoVar(obj)
+            CoVariance = obj.CoVar;
+        <span class="keyword">end</span>
+        <span class="comment">%------------------------------------------------------------------</span>
+        <span class="keyword">function</span> [InvCoVariance]=getInvCoVar(obj)
+            InvCoVariance = obj.InvCoVar;
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> [CoVariogram]=getCoVariogram(obj)
+            CoVariogram = obj.CoVariogram;
+        <span class="keyword">end</span>
+        <span class="comment">%------------------------------------------------------------------</span>
+        <span class="keyword">function</span> [InvCoVariogram]=getInvCoVariogram(obj)
+            InvCoVariogram = obj.InvCoVariogram;
+        <span class="keyword">end</span>
+        <span class="comment">%------------------------------------------------------------------</span>
+        <span class="keyword">function</span> [nFct] = get_nFct(obj)
+        <span class="comment">% Gives out the number of basis functions</span>
+            nFct = obj.nFct;
+        <span class="keyword">end</span>
+        <span class="comment">%------------------------------------------------------------------</span>
+        <span class="keyword">function</span> [BasisFct] = getBasisFct(obj)
+            BasisFct = obj.BasisFct;
+        <span class="keyword">end</span>
+        <span class="comment">%------------------------------------------------------------------</span>
+        <span class="keyword">function</span> [GACR]=getGACR(obj)
+            <span class="comment">% Get the fraction of the population at the next generation, not including elite children, that is created by the crossover function</span>
+            GACR = obj.GACR;
+        <span class="keyword">end</span>
+        <span class="comment">%------------------------------------------------------------------</span>
+        <span class="keyword">function</span> [Generations]=getGenerations(obj)
+            <span class="comment">% Get the Positive integer specifying the maximum number of iterations before the algorithm halts</span>
+            Generations = obj.Generations;
+        <span class="keyword">end</span>
+        <span class="comment">%------------------------------------------------------------------</span>
+        <span class="keyword">function</span> [MigrationFraction]=getMigrationFraction(obj)
+            <span class="comment">% Get the Scalar between 0 and 1 specifying the fraction of individuals in each subpopulation that migrates to a different subpopulation</span>
+            MigrationFraction = obj.MigrationFraction;
+        <span class="keyword">end</span>
+        <span class="comment">%------------------------------------------------------------------</span>
+        <span class="keyword">function</span> [NormInput]=getNormInput(obj)
+            <span class="comment">% (1) if the input is normalized. (0) if not</span>
+            NormInput = obj.NormInput;
+        <span class="keyword">end</span>
+        <span class="comment">%------------------------------------------------------------------</span>
+        <span class="keyword">function</span> [NormOutput]=getNormOutput(obj)
+            <span class="comment">% (1) if the Output is normalized. (0) if not</span>
+            NormOutput = obj.NormOutput ;
+        <span class="keyword">end</span>
+</pre><h2>Set Functions<a name="17"></a></h2><pre class="codeinput">        <span class="keyword">function</span> [] = setInputData(obj,Input)
+            <span class="comment">% Define the InputVariables the number of rows should be euqal</span>
+            <span class="comment">% to the number of experiments and the columns equal to the</span>
+            <span class="comment">% number of input variables</span>
+            obj.InputData = Input;
+            obj.InputData_True = Input;
+            obj.nExperiments = size(Input,1);
+            obj.nInputVar = size(Input,2);
+            <span class="keyword">if</span>(obj.nInputVar&gt;obj.nExperiments)
+                warning(<span class="string">'InputData: More Input variables as Experiments'</span>);
+            <span class="keyword">end</span>
+            <span class="keyword">if</span> obj.NormInput==1
+                <span class="keyword">for</span> iInput = 1:obj.nInputVar
+                    obj.InputData(:,iInput) = obj.scale(obj.InputData(:,iInput),min(obj.InputData(:,iInput)),<span class="keyword">...</span>
+                        max(obj.InputData(:,iInput)),0,1);
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+            obj.setModelChoice(obj.ModelChoice);
+        <span class="keyword">end</span>
+        <span class="comment">%------------------------------------------------------------------</span>
+        <span class="comment">% Define the outputVariables</span>
+        <span class="keyword">function</span> [] = setOutputData(obj,Output)
+            <span class="comment">% Define the OutputVariables the number of rows should be equal</span>
+            <span class="comment">% to the number of experiments and the columns equal to one</span>
+            <span class="keyword">if</span>(size(Output,2)~=1)
+               error(<span class="string">'Dimension of Output vector is not correct! The number of columns should be 1 but it is %i'</span>,size(Output,2));
+            <span class="keyword">end</span>
+            <span class="keyword">if</span>(size(Output,1)~=obj.nExperiments)
+               error(<span class="string">'The number of entries in the InputData (%i) and in the OutputData (%i) are not the same!'</span>,obj.nExperiments,size(Output,1));
+            <span class="keyword">end</span>
+
+            obj.OutputData = Output;
+            obj.OutputData_True = Output;
+            obj.nOutputVar = size(Output,2);
+
+            <span class="keyword">if</span> obj.NormOutput==1
+                    obj.OutputData = obj.scale(obj.OutputData,<span class="keyword">...</span>
+                        min(obj.OutputData),max(obj.OutputData),0,1);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+        <span class="comment">%------------------------------------------------------------------</span>
+        <span class="comment">% Choose the vlaues for the exponetial radial function</span>
+        <span class="keyword">function</span> []=setModelParameters(obj,varargin)
+            <span class="comment">% This function set the Kriging parameters. The Parameters</span>
+            <span class="comment">% depends on your model choice for the covariance</span>
+            <span class="keyword">switch</span> obj.ModelChoice
+                <span class="keyword">case</span> 1
+                    <span class="keyword">if</span>(length(varargin)&gt;3)
+                        warning(<span class="string">'The exponential model needs only 3 parameter but %i are defined!'</span>,length(varargin));
+                    <span class="keyword">end</span>
+                    <span class="keyword">if</span>(length(varargin)&lt;3)
+                        error(<span class="string">'The exponential model needs 3 parameter but only %i are defined!'</span>,length(varargin));
+                    <span class="keyword">end</span>
+                    obj.theta       = varargin{1};
+                    obj.sigma       = varargin{2};
+                    obj.p           = varargin{3};
+                <span class="keyword">case</span> 2
+<span class="comment">%                     warning('As long as no better solution is found, CoVar(0)=CoVar(~0) it is unlikely that during multiple measurments exact the same input values are chosen!\n Otherwise the equation system has no unique solution',length(varargin));</span>
+                    <span class="keyword">if</span>(length(varargin)&gt;4)
+                        warning(<span class="string">'The exponential model with nugget needs only 4 parameter but %i are defined!'</span>,length(varargin));
+                    <span class="keyword">end</span>
+                    <span class="keyword">if</span>(length(varargin)&lt;4)
+                        error(<span class="string">'The exponential model needs 4 parameter but only %i are defined!'</span>,length(varargin));
+                    <span class="keyword">end</span>
+                    obj.theta       = varargin{1};
+                    obj.sigma       = varargin{2};
+                    obj.p           = varargin{3};
+                    obj.sigmaError  = varargin{4};
+                <span class="keyword">case</span> 3
+                    obj.theta       = varargin{1};
+                    obj.sigma       = varargin{2};
+                    obj.p           = varargin{3};
+                    obj.sigmaError  = 0;
+                <span class="keyword">otherwise</span>
+                    error(<span class="string">'Non-acceptable model choice. The parameter modelChoice = %i is not allowed'</span>,obj.ModelChoice);
+            <span class="keyword">end</span>
+
+            <span class="comment">% model = theta*exp(-(x/sigma)^p)</span>
+
+        <span class="keyword">end</span>
+        <span class="comment">%------------------------------------------------------------------</span>
+        <span class="keyword">function</span> [] = setLowerBounds(obj,varargin)
+            <span class="comment">% Notice this function shall only be called AFTER</span>
+            <span class="comment">% setInput/setModelChoise</span>
+            <span class="keyword">switch</span> obj.ModelChoice
+                <span class="keyword">case</span> {1,3}
+                    <span class="keyword">if</span>(length(varargin)&gt;3)
+                        warning(<span class="string">'The exponential model needs only 3 parameter but %i are defined!'</span>,length(varargin));
+                    <span class="keyword">end</span>
+                    <span class="keyword">if</span>(length(varargin)&lt;3)
+                        error(<span class="string">'The exponential model needs 3 parameter but only %i are defined!'</span>,length(varargin));
+                    <span class="keyword">end</span>
+                    obj.LowerBound = [varargin{1},varargin{2},varargin{3}];
+                <span class="keyword">case</span> 2
+                    <span class="keyword">if</span>(length(varargin)&gt;4)
+                        warning(<span class="string">'The exponential model with nugget needs only 4 parameter but %i are defined!'</span>,length(varargin));
+                    <span class="keyword">end</span>
+                    <span class="keyword">if</span>(length(varargin)&lt;4)
+                        error(<span class="string">'The exponential model needs 4 parameter but only %i are defined!'</span>,length(varargin));
+                    <span class="keyword">end</span>
+                    obj.LowerBound = [varargin{1},varargin{2},varargin{3},varargin{4}];
+                <span class="keyword">otherwise</span>
+                    error(<span class="string">'Non-acceptable model choice. The parameter modelChoice = %i is not allowed'</span>,obj.ModelChoice);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+        <span class="comment">%------------------------------------------------------------------</span>
+        <span class="keyword">function</span> [] = setUpperBounds(obj,varargin)
+            <span class="comment">% Notice this function shall only be called AFTER</span>
+            <span class="comment">% setInput/setModelChoise</span>
+            <span class="keyword">switch</span> obj.ModelChoice
+                <span class="keyword">case</span> {1,3}
+                    <span class="keyword">if</span>(length(varargin)&gt;3)
+                        warning(<span class="string">'The exponential model needs only 3 parameter but %i are defined!'</span>,length(varargin));
+                    <span class="keyword">end</span>
+                    <span class="keyword">if</span>(length(varargin)&lt;3)
+                        error(<span class="string">'The exponential model needs 3 parameter but only %i are defined!'</span>,length(varargin));
+                    <span class="keyword">end</span>
+                    obj.UpperBound = [varargin{1},varargin{2},varargin{3}];
+                <span class="keyword">case</span> 2
+                    <span class="keyword">if</span>(length(varargin)&gt;4)
+                        warning(<span class="string">'The exponential model with nugget needs only 4 parameter but %i are defined!'</span>,length(varargin));
+                    <span class="keyword">end</span>
+                    <span class="keyword">if</span>(length(varargin)&lt;4)
+                        error(<span class="string">'The exponential model needs 4 parameter but only %i are defined!'</span>,length(varargin));
+                    <span class="keyword">end</span>
+                    obj.UpperBound = [varargin{1},varargin{2},varargin{3},varargin{4}];
+                <span class="keyword">otherwise</span>
+                    error(<span class="string">'Non-acceptable model choice. The parameter modelChoice = %i is not allowed'</span>,obj.ModelChoice);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+        <span class="comment">%------------------------------------------------------------------</span>
+        <span class="keyword">function</span> []=setModelChoice(obj,Model)
+            <span class="keyword">switch</span> Model
+                <span class="keyword">case</span> 1
+                    <span class="comment">% Vector = [theta, sigma, p]</span>
+                    obj.LowerBound = [1e-10,1e-10,0];
+                    obj.UpperBound = [1e10,1e10,2];
+                <span class="keyword">case</span> 2
+                    <span class="comment">% Vector = [theta, sigma, p,sigmaError]</span>
+                    obj.LowerBound = [1e-10,1e-10,0,1e-10];
+                    obj.UpperBound = [1e10,1e10,2,1e10];
+                <span class="keyword">case</span> 3
+                    <span class="comment">% Vector = [theta(a vector), sigma, p]</span>
+                    obj.theta = ones(1,obj.nInputVar);
+                    obj.p     = ones(1,obj.nInputVar)*2;
+                    obj.LowerBound = [ones(1,obj.nInputVar)*1e-10,1e-10,zeros(1,obj.nInputVar)];
+                    obj.UpperBound = [ones(1,obj.nInputVar)*inf,inf,ones(1,obj.nInputVar)*2];
+                <span class="keyword">otherwise</span>
+                    error(<span class="string">'Non-acceptable model choice. The parameter modelChoice = %i is not allowed'</span>,Model);
+            <span class="keyword">end</span>
+        obj.ModelChoice = Model;
+        <span class="keyword">end</span>
+        <span class="comment">%------------------------------------------------------------------</span>
+        <span class="keyword">function</span> []=setGACR(obj,GACR)
+            <span class="comment">% Set the fraction of the population at the next generation, not including elite children, that is created by the crossover function</span>
+            obj.GACR = GACR;
+        <span class="keyword">end</span>
+        <span class="comment">%------------------------------------------------------------------</span>
+        <span class="keyword">function</span> []=setGenerations(obj,Generations)
+            <span class="comment">% Set the Positive integer specifying the maximum number of iterations before the algorithm halts</span>
+            obj.Generations = Generations;
+        <span class="keyword">end</span>
+        <span class="comment">%------------------------------------------------------------------</span>
+        <span class="keyword">function</span> []=setMigrationFraction(obj,MigrationFraction)
+            <span class="comment">% Set the Scalar between 0 and 1 specifying the fraction of individuals in each subpopulation that migrates to a different subpopulation</span>
+            obj.MigrationFraction = MigrationFraction;
+        <span class="keyword">end</span>
+        <span class="comment">%------------------------------------------------------------------</span>
+        <span class="keyword">function</span> []=setNormInput(obj,NormInput)
+            <span class="comment">% Decide if the input shall be normalized(1) or not (0)</span>
+            obj.NormInput = NormInput;
+        <span class="keyword">end</span>
+        <span class="comment">%------------------------------------------------------------------</span>
+        <span class="keyword">function</span> []=setNormOutput(obj,NormOutput)
+            <span class="comment">% Decide if the output shall be normalized(1) or not (0)</span>
+            obj.NormOutput = NormOutput;
+        <span class="keyword">end</span>
+</pre><pre class="codeinput">    <span class="keyword">end</span>
+</pre><pre class="codeinput"><span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.11<br></p></div><!--
+##### SOURCE BEGIN #####
+classdef KrigingSuperClass<handle
+    %KRIGINGSUPERCLASS Summary of this class goes here
+    %   Detailed explanation goes here
+    
+    %% Public Members
+    properties(GetAccess='public',SetAccess='public')
+    end
+    
+    %% Private Members
+    properties(GetAccess='private',SetAccess='private')
+
+    end
+    
+    %% Protected Members
+    properties(GetAccess='protected',SetAccess='protected')
+                %% General Variables
+        % Contains the Provided Parameter Set. If Normailization is
+        % activated this matrix conains double between 0 and 1
+        InputData  = [];
+        % Contains the actual Provided Parameter Set (not effected by
+        % normalization). 
+        InputData_True  = [];
+        OutputData = [];
+        OutputData_True = [];
+            % 1 ... exponetial
+            % 2 ... exponetial with nugget (later)
+        ModelChoice     = 1;
+        checkInvVariogram = 0;
+        checkInvCoVariogram = 0;
+        %% Numbers of Variables
+        nExperiments    = 0;
+        nInputVar       = 0;
+        nOutputVar      = 0;
+        %% Distance Measurements
+        DistInput       = [];
+        DistSquareOutput= [];
+        InvVariogram    = [];
+        Variogram       = [];
+        InvCoVariogram    = [];
+        CoVariogram       = [];
+        CoVar           = [];
+        InvCoVar        = [];
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        %% Radial function parameters
+        LowerBound = [0,0,0];
+        UpperBound = [1e10,1e10,2];
+        % Exponential radial function = sigmaError + thetha*exp(-(x/sigma)^2)
+        sigma=1;
+        theta=1;
+        p=2;
+        sigmaError = 1e-10;
+        ModelVarError = inf;
+        MuMaxLikelihood = 0;
+        SigmaMaxLikelihood = 0;
+        %% Universal Kriging
+        % The number of basis functions
+        nFct = 0;
+        BasisFct = {};
+        %% Genetic Algorithm
+        % GA-Alg.: The fraction of the population at the next generation, not including elite children, that is created by the crossover function
+        GACR = 0.8
+        % GA-Alg.: Positive integer specifying the maximum number of iterations before the algorithm halts
+        Generations = 100;
+        % GA-Alg.: Scalar between 0 and 1 specifying the fraction of individuals in each subpopulation that migrates to a different subpopulation
+        MigrationFraction = 0.2;
+        %% Normalization Parameters
+        NormInput = 0;
+        NormOutput = 0;
+    end
+    
+    methods
+        %% Constructor
+        function obj = KrigingSuperClass()
+        end
+        %% General Methods
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        reset(obj)
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        % Calculate the covariance using the chosen model
+        covariance = CovarModel(obj,distance,varargin);
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        % Calculate the square dor absolute ifferences between all data
+        calcDifference(obj);
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        % Calculate inverse of extended Variogram
+        calcInverseVariogram(obj);
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        % Calculate inverse of extended CoVariogram
+        calcInverseVariogramCo(obj);
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        % Solve Least Square Problem
+        SQ_CoVar = LeastSquareFunction(obj,varargin);
+        % Solve Least Square Problem (Local via fmincon)
+        solveLeastSquare(obj);
+        % Solve Least Square Problem (Global via Differential Evolution)
+        solveLeastSquareDE(obj);
+        % Solve Least Square Problem (Global via Differential Evolution)
+        solveLeastSquareGA(obj);
+        
+        [negLogLikelihood] = MaximumLikelihood(obj,varargin);
+        solveMaxLikelihood(obj);
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        % Collects the points which has to be done to calculate the
+        % Variogramm
+        makePrework(obj);
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        % Collects the points which has to be done to calculate the
+        % Variogramm
+        makePreworkMaxLikelihood(obj);
+        % REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+        % Prediction of the output for the given input points using the
+        % Variogram matrix
+        [output]=prediction(obj,input);
+        % REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+        % Prediction of the output for the given input points
+        [output]=predictionCo(obj,input);
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        % Plot Variogramm
+        plotVariogram(obj);
+        % REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function f=scale(obj,x,minX,maxX,LB,UB)
+            % f=scale(x,minX,maxX,LB,UB)
+            % Scales x which is a variable in the range [minX,maxX] to the 
+            % range [LB,UB]
+            f=(x-minX)/(maxX-minX)*(UB-LB)+LB;
+        end
+        %% Get Functions
+        function [DistInput]=getDistInput(obj) 
+            DistInput = obj.DistInput;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function [DistSquareOutput]=getDistSquareOutput(obj) 
+            DistSquareOutput = obj.DistSquareOutput;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function [nInputVar]=get_nInputVar(obj) 
+            nInputVar = obj.nInputVar;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function [nExperiments]=get_nExperiments(obj) 
+            nExperiments = obj.nExperiments;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function [theta,sigma,p,sigmaError]=getModelParameters(obj) 
+            theta = obj.theta;
+            sigma = obj. sigma;
+            p     = obj.p;
+            sigmaError = obj.sigmaError;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function [ModelVarError] = getModelVarError(obj)
+            % Gives the squared error after the optimization. If the error 
+            % is equal to infinity than was most likely no optimization applied
+            ModelVarError=obj.ModelVarError;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function [Variogram] = getVariogramMatrix(obj)
+            Variogram = obj.Variogram;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function [ModelChoice] = getModelChoice(obj)
+            ModelChoice=obj.ModelChoice;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function [Input] = getInputData(obj)
+            Input = obj.InputData;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function [Output] = getOutputData(obj)
+            Output = obj.OutputData;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function [LowerBound] = getLowerBounds(obj)
+            LowerBound = obj.LowerBound;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function [UpperBound] = getUpperBounds(obj)
+            UpperBound = obj.UpperBound;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function [CoVariance]=getCoVar(obj)
+            CoVariance = obj.CoVar;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function [InvCoVariance]=getInvCoVar(obj)
+            InvCoVariance = obj.InvCoVar;
+        end
+        function [CoVariogram]=getCoVariogram(obj)
+            CoVariogram = obj.CoVariogram;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function [InvCoVariogram]=getInvCoVariogram(obj)
+            InvCoVariogram = obj.InvCoVariogram;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function [nFct] = get_nFct(obj)
+        % Gives out the number of basis functions
+            nFct = obj.nFct;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function [BasisFct] = getBasisFct(obj)
+            BasisFct = obj.BasisFct;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function [GACR]=getGACR(obj)
+            % Get the fraction of the population at the next generation, not including elite children, that is created by the crossover function
+            GACR = obj.GACR;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function [Generations]=getGenerations(obj)
+            % Get the Positive integer specifying the maximum number of iterations before the algorithm halts
+            Generations = obj.Generations;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function [MigrationFraction]=getMigrationFraction(obj)
+            % Get the Scalar between 0 and 1 specifying the fraction of individuals in each subpopulation that migrates to a different subpopulation
+            MigrationFraction = obj.MigrationFraction;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function [NormInput]=getNormInput(obj)
+            % (1) if the input is normalized. (0) if not
+            NormInput = obj.NormInput;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function [NormOutput]=getNormOutput(obj)
+            % (1) if the Output is normalized. (0) if not
+            NormOutput = obj.NormOutput ;
+        end
+        
+        %% Set Functions
+        function [] = setInputData(obj,Input)
+            % Define the InputVariables the number of rows should be euqal
+            % to the number of experiments and the columns equal to the
+            % number of input variables
+            obj.InputData = Input;
+            obj.InputData_True = Input;
+            obj.nExperiments = size(Input,1);
+            obj.nInputVar = size(Input,2);
+            if(obj.nInputVar>obj.nExperiments)
+                warning('InputData: More Input variables as Experiments');
+            end
+            if obj.NormInput==1
+                for iInput = 1:obj.nInputVar
+                    obj.InputData(:,iInput) = obj.scale(obj.InputData(:,iInput),min(obj.InputData(:,iInput)),...
+                        max(obj.InputData(:,iInput)),0,1);
+                end
+            end
+            obj.setModelChoice(obj.ModelChoice);
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        % Define the outputVariables
+        function [] = setOutputData(obj,Output)
+            % Define the OutputVariables the number of rows should be equal
+            % to the number of experiments and the columns equal to one
+            if(size(Output,2)~=1)
+               error('Dimension of Output vector is not correct! The number of columns should be 1 but it is %i',size(Output,2));
+            end
+            if(size(Output,1)~=obj.nExperiments)
+               error('The number of entries in the InputData (%i) and in the OutputData (%i) are not the same!',obj.nExperiments,size(Output,1));
+            end
+            
+            obj.OutputData = Output;
+            obj.OutputData_True = Output;
+            obj.nOutputVar = size(Output,2);
+            
+            if obj.NormOutput==1
+                    obj.OutputData = obj.scale(obj.OutputData,...
+                        min(obj.OutputData),max(obj.OutputData),0,1);
+            end
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        % Choose the vlaues for the exponetial radial function
+        function []=setModelParameters(obj,varargin) 
+            % This function set the Kriging parameters. The Parameters
+            % depends on your model choice for the covariance
+            switch obj.ModelChoice
+                case 1
+                    if(length(varargin)>3)
+                        warning('The exponential model needs only 3 parameter but %i are defined!',length(varargin));
+                    end
+                    if(length(varargin)<3)
+                        error('The exponential model needs 3 parameter but only %i are defined!',length(varargin));
+                    end
+                    obj.theta       = varargin{1};
+                    obj.sigma       = varargin{2};
+                    obj.p           = varargin{3};
+                case 2
+%                     warning('As long as no better solution is found, CoVar(0)=CoVar(~0) it is unlikely that during multiple measurments exact the same input values are chosen!\n Otherwise the equation system has no unique solution',length(varargin));
+                    if(length(varargin)>4)
+                        warning('The exponential model with nugget needs only 4 parameter but %i are defined!',length(varargin));
+                    end
+                    if(length(varargin)<4)
+                        error('The exponential model needs 4 parameter but only %i are defined!',length(varargin));
+                    end
+                    obj.theta       = varargin{1};
+                    obj.sigma       = varargin{2};
+                    obj.p           = varargin{3};
+                    obj.sigmaError  = varargin{4};
+                case 3
+                    obj.theta       = varargin{1};
+                    obj.sigma       = varargin{2};
+                    obj.p           = varargin{3};
+                    obj.sigmaError  = 0;
+                otherwise
+                    error('Non-acceptable model choice. The parameter modelChoice = %i is not allowed',obj.ModelChoice);
+            end
+            
+            % model = theta*exp(-(x/sigma)^p)
+            
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function [] = setLowerBounds(obj,varargin)
+            % Notice this function shall only be called AFTER
+            % setInput/setModelChoise
+            switch obj.ModelChoice
+                case {1,3}
+                    if(length(varargin)>3)
+                        warning('The exponential model needs only 3 parameter but %i are defined!',length(varargin));
+                    end
+                    if(length(varargin)<3)
+                        error('The exponential model needs 3 parameter but only %i are defined!',length(varargin));
+                    end
+                    obj.LowerBound = [varargin{1},varargin{2},varargin{3}];
+                case 2
+                    if(length(varargin)>4)
+                        warning('The exponential model with nugget needs only 4 parameter but %i are defined!',length(varargin));
+                    end
+                    if(length(varargin)<4)
+                        error('The exponential model needs 4 parameter but only %i are defined!',length(varargin));
+                    end
+                    obj.LowerBound = [varargin{1},varargin{2},varargin{3},varargin{4}];
+                otherwise
+                    error('Non-acceptable model choice. The parameter modelChoice = %i is not allowed',obj.ModelChoice);
+            end
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function [] = setUpperBounds(obj,varargin)
+            % Notice this function shall only be called AFTER
+            % setInput/setModelChoise
+            switch obj.ModelChoice
+                case {1,3}
+                    if(length(varargin)>3)
+                        warning('The exponential model needs only 3 parameter but %i are defined!',length(varargin));
+                    end
+                    if(length(varargin)<3)
+                        error('The exponential model needs 3 parameter but only %i are defined!',length(varargin));
+                    end
+                    obj.UpperBound = [varargin{1},varargin{2},varargin{3}];
+                case 2
+                    if(length(varargin)>4)
+                        warning('The exponential model with nugget needs only 4 parameter but %i are defined!',length(varargin));
+                    end
+                    if(length(varargin)<4)
+                        error('The exponential model needs 4 parameter but only %i are defined!',length(varargin));
+                    end
+                    obj.UpperBound = [varargin{1},varargin{2},varargin{3},varargin{4}];
+                otherwise
+                    error('Non-acceptable model choice. The parameter modelChoice = %i is not allowed',obj.ModelChoice);
+            end
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function []=setModelChoice(obj,Model) 
+            switch Model
+                case 1
+                    % Vector = [theta, sigma, p]
+                    obj.LowerBound = [1e-10,1e-10,0];
+                    obj.UpperBound = [1e10,1e10,2];
+                case 2
+                    % Vector = [theta, sigma, p,sigmaError]
+                    obj.LowerBound = [1e-10,1e-10,0,1e-10];
+                    obj.UpperBound = [1e10,1e10,2,1e10];
+                case 3
+                    % Vector = [theta(a vector), sigma, p]
+                    obj.theta = ones(1,obj.nInputVar);
+                    obj.p     = ones(1,obj.nInputVar)*2;
+                    obj.LowerBound = [ones(1,obj.nInputVar)*1e-10,1e-10,zeros(1,obj.nInputVar)];
+                    obj.UpperBound = [ones(1,obj.nInputVar)*inf,inf,ones(1,obj.nInputVar)*2];
+                otherwise
+                    error('Non-acceptable model choice. The parameter modelChoice = %i is not allowed',Model);
+            end
+        obj.ModelChoice = Model;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function []=setGACR(obj,GACR)
+            % Set the fraction of the population at the next generation, not including elite children, that is created by the crossover function
+            obj.GACR = GACR;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function []=setGenerations(obj,Generations)
+            % Set the Positive integer specifying the maximum number of iterations before the algorithm halts
+            obj.Generations = Generations;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function []=setMigrationFraction(obj,MigrationFraction)
+            % Set the Scalar between 0 and 1 specifying the fraction of individuals in each subpopulation that migrates to a different subpopulation
+            obj.MigrationFraction = MigrationFraction;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function []=setNormInput(obj,NormInput)
+            % Decide if the input shall be normalized(1) or not (0)
+            obj.NormInput = NormInput;
+        end
+        %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+        function []=setNormOutput(obj,NormOutput)
+            % Decide if the output shall be normalized(1) or not (0)
+            obj.NormOutput = NormOutput;
+        end
+    end
+    
+end
+
+
+##### SOURCE END #####
+--></body></html>

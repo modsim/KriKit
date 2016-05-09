@@ -1,0 +1,15 @@
+- Genetic Algorithm in "ga2()" is an adaptation of the optimizaer implemented by Chipperfield and be downloaded from http://www.shef.ac.uk/acse/research/ecrg/gat.html and http://codem.group.shef.ac.uk/index.php/ga-toolbox. Introduction Paper: Chipperfield, A. J., and P. J. Fleming. "The MATLAB genetic algorithm toolbox." Applied Control Techniques Using  MATLAB, IEE Colloquium on. IET, 1995.  
+
+- "linspaceNDim()" was implemented by Steeve AMBROISE (contact sambroise@gmail.com)
+
+- "calcEHIV_2D()" is inspired by by the code of Michael Emmerich and Andre Deutz, LIACS, Leiden University, 2010  Based on the paper: M. Emmerich, A.H. Deutz, J.W. Klinkenberg: The computation of the expected improvement in dominated hypervolume of Pareto front approximations , LIACS TR-4-2008, Leiden University, The Netherlands http://www.liacs.nl/~emmerich/TR-ExI.pdf
+
+- For triangular in the AnalysisMixtrue class, plotting function make use of function contained in the Ternplot toolbox available at http://www.mathworks.com/matlabcentral/fileexchange/2299-ternploton 
+
+- For plotting the 3D Pareto surface, "gridfit"(Copyright (c) 2006, John D'Errico) tool which can be downloaded at http://www.mathworks.com/matlabcentral/fileexchange/8998-surface-fitting-using-gridfit'
+
+- Hypervolume indicator was calculated using the implementation of Carlos M. Fonseca available at http://lopez-ibanez.eu/hypervolume (Literature: Carlos M. Fonseca, Luís Paquete, and Manuel López-Ibáñez. An improved dimension - sweep algorithm for the hypervolume indicator. In Proceedings of the 2006 Congress on Evolutionary Computation (CEC'06), pages 1157–1163. IEEE Press, Piscataway, NJ, July 2006.)
+
+-  Markov Chain can be calculated using the DRAM algorithm  implemented in the MCMC toolbox for Matlab by Marko Laine. Available at http://helios.fmi.fi/~lainema/mcmc/ (Literature H. Haario, M. Laine, A. Mira and E. Saksman, 2006. DRAM: Efficient adaptive MCMC, Statistics and Computing 16, pp. 339-354. (doi:10.1007/s11222-006-9438-0) )
+
+- During Cross validation, inverse is updated using implementation of Yi Cao (20-12-2007, at Cranfield University) (Avaiable at http://www.mathworks.com/matlabcentral/fileexchange/18063-update-inverse-matrix)

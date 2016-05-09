@@ -1,0 +1,11 @@
+- estimateVariance
+- CovarModel
+- calcCovariogramMatrix
+- setCovariogramModelParameters
+- getCovariogramModelParameters
+- saveOptimizedCovariogramParameters
+- setCovariogramParameterBoundsAndValues
+- prediction ->doPredictionUniversalKriging
+- InitializeVariogramParameters
+- AnalyzeKriging->calcCovarMatrixOfPredictions
+- generateRegressionGPModel

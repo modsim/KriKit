@@ -1,0 +1,183 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>calcnNewSamplesMarkovChainContinues</title><meta name="generator" content="MATLAB 8.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-08-04"><meta name="DC.source" content="calcnNewSamplesMarkovChainContinues.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> [] = calcnNewSamplesMarkovChainContinues(obj,varargin)
+<span class="comment">% [] = calcnNewSamplesMarkovChainContinues(KrigingObjectIndex,InputVarIndices,InputVarValues)</span>
+<span class="comment">% Finding new samples by calculating a markov chain</span>
+<span class="comment">% 1. Calculate a initial sample point which is uniformly randomly</span>
+<span class="comment">%   distributed over the entire solution space and calculate its associated</span>
+<span class="comment">%   expected improvement value.</span>
+<span class="comment">% For all sample points do:</span>
+<span class="comment">%   1. Calculate a new sample point which is uniformly randomly</span>
+<span class="comment">%      distributed over the entire solution space</span>
+<span class="comment">%   2. Calculate its associated expected improvement value.</span>
+<span class="comment">%   3. Accept the randomly chosen sample point as part of the set of the</span>
+<span class="comment">%   new suggested sample points if u&lt;min(1,newExpectedImprovement/currentExpectedImprovement)</span>
+<span class="comment">%   4. If it was accepted that set i t to the current sample points for the</span>
+<span class="comment">%   next tests</span>
+<span class="comment">% Using monte Carlo sampling leads to random distributed sample point with</span>
+<span class="comment">% the tendency to follow increasing expeted values of improvement. If</span>
+<span class="comment">% diescreteBool=true the final sample points are moved to the nearst point</span>
+<span class="comment">% given in InputVarValues, based on the normalized euclidean distance.</span>
+<span class="comment">%</span>
+<span class="comment">% InputVarIndices ... row vector containing Indices of the input variables</span>
+<span class="comment">% InputVarValues ... is a cell-array where each cell contains the</span>
+<span class="comment">%   extrem values of the input variable ([MinInput,MaxInput]) at which</span>
+<span class="comment">%   new samples are allowed to be. The cells should be in the same</span>
+<span class="comment">%   order as the indices in "InputVarIndices"</span>
+<span class="comment">%</span>
+<span class="comment">% You can adjust the function using the following "set"-Functions:</span>
+<span class="comment">% - setMinMax ... decide if the objective is to maximize or minimize</span>
+<span class="comment">%       the output variable. If MinMax is an array than only the first</span>
+<span class="comment">%       entry is considered. Minimization by Default.</span>
+<span class="comment">% - setnSamples ... decide how many suggested samples you want to</span>
+<span class="comment">%       receive as output</span>
+<span class="comment">% - setnPresteps ... decide how many Markov Links should be calculated</span>
+<span class="comment">%                    before the links are used as new samples</span>
+<span class="comment">% Copyright 2014-2015: Lars Freier, Eric von Lieres</span>
+<span class="comment">% See the license note at the end of the file.</span>
+
+
+    <span class="comment">% Initialization</span>
+    KrigingObjectIndex = varargin{1};
+    InputVarIndices = varargin{2};
+    InputVarValues = varargin{3};
+    obj.calcnNewSamplesMarkovChain(KrigingObjectIndex,InputVarIndices,InputVarValues,false)
+<span class="keyword">end</span>
+<span class="comment">% =============================================================================</span>
+<span class="comment">%  KriKit - Kriging toolKit</span>
+<span class="comment">%</span>
+<span class="comment">%  Copyright 2014-2015: Lars Freier(1), Eric von Lieres(1)</span>
+<span class="comment">%</span>
+<span class="comment">%    (1)Forschungszentrum Juelich GmbH, IBG-1, Juelich, Germany.</span>
+<span class="comment">%</span>
+<span class="comment">%  All rights reserved. This program and the accompanying materials</span>
+<span class="comment">%  are made available under the terms of the GNU Public License v3.0 (or, at</span>
+<span class="comment">%  your option, any later version) which accompanies this distribution, and</span>
+<span class="comment">%  is available at http://www.gnu.org/licenses/gpl.html</span>
+<span class="comment">% =============================================================================</span>
+</pre><pre class="codeoutput">The class AnalyzeKriging has no property or method named 'calcnNewSamplesMarkovChainContinues'.
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+function [] = calcnNewSamplesMarkovChainContinues(obj,varargin)
+% [] = calcnNewSamplesMarkovChainContinues(KrigingObjectIndex,InputVarIndices,InputVarValues)
+% Finding new samples by calculating a markov chain
+% 1. Calculate a initial sample point which is uniformly randomly
+%   distributed over the entire solution space and calculate its associated
+%   expected improvement value.
+% For all sample points do:
+%   1. Calculate a new sample point which is uniformly randomly
+%      distributed over the entire solution space
+%   2. Calculate its associated expected improvement value.
+%   3. Accept the randomly chosen sample point as part of the set of the
+%   new suggested sample points if u<min(1,newExpectedImprovement/currentExpectedImprovement)
+%   4. If it was accepted that set i t to the current sample points for the
+%   next tests
+% Using monte Carlo sampling leads to random distributed sample point with
+% the tendency to follow increasing expeted values of improvement. If
+% diescreteBool=true the final sample points are moved to the nearst point
+% given in InputVarValues, based on the normalized euclidean distance.
+% 
+% InputVarIndices ... row vector containing Indices of the input variables
+% InputVarValues ... is a cell-array where each cell contains the
+%   extrem values of the input variable ([MinInput,MaxInput]) at which
+%   new samples are allowed to be. The cells should be in the same
+%   order as the indices in "InputVarIndices"
+% 
+% You can adjust the function using the following "set"-Functions: 
+% - setMinMax ... decide if the objective is to maximize or minimize
+%       the output variable. If MinMax is an array than only the first
+%       entry is considered. Minimization by Default.
+% - setnSamples ... decide how many suggested samples you want to 
+%       receive as output 
+% - setnPresteps ... decide how many Markov Links should be calculated
+%                    before the links are used as new samples
+% Copyright 2014-2015: Lars Freier, Eric von Lieres
+% See the license note at the end of the file.
+
+
+    % Initialization
+    KrigingObjectIndex = varargin{1};
+    InputVarIndices = varargin{2};
+    InputVarValues = varargin{3};
+    obj.calcnNewSamplesMarkovChain(KrigingObjectIndex,InputVarIndices,InputVarValues,false)
+end
+% =============================================================================
+%  KriKit - Kriging toolKit
+%  
+%  Copyright 2014-2015: Lars Freier(1), Eric von Lieres(1)
+%                                      
+%    (1)Forschungszentrum Juelich GmbH, IBG-1, Juelich, Germany.
+%  
+%  All rights reserved. This program and the accompanying materials
+%  are made available under the terms of the GNU Public License v3.0 (or, at
+%  your option, any later version) which accompanies this distribution, and
+%  is available at http://www.gnu.org/licenses/gpl.html
+% =============================================================================
+
+##### SOURCE END #####
+--></body></html>

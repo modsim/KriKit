@@ -1,0 +1,169 @@
+%% CalcInverse case 5
+obj.Variogram = zeros(obj.nExperiments,obj.nExperiments);
+% Do nothing, Variogram matrix is not extended!
+%% Prediction
+% 
+            % ############################################################################## 
+            % ########## Calculate the variogram matrix and the variogram vector ###########
+            % ##############################################################################
+            % Matrix
+            if (obj.checkInvVariogram==0)
+                obj.calcInverseVariogram();
+                obj.checkInvVariogram = 1;
+            end
+            % Vector
+                % Calculate the distances between the new points and the provides
+                % measurements
+                    % Extend vector of inputdata
+            [~,index] = ndgrid(1:size(obj.InputData(:,:),1),1:nInput);
+            index=index(:);
+                    % Calculate difference
+            distance = repmat(obj.InputData(:,:),nInput,1)-input(index,:);
+                    % Euclidean norm
+            distance = sqrt(sum(distance.^2,2));
+                    % Convert to the correct shape
+            distance = reshape(distance,obj.nExperiments,nInput);
+
+                % Calculate variogram vector
+                    % Initialization
+            VarGramm = zeros(obj.nExperiments,nInput);
+                    % Use calculated distances for the determination of the
+                    % variogram vector
+            VarGramm(1:obj.nExperiments,:) = obj.CovarModel(0,1) - obj.CovarModel(distance,1);
+            
+            
+            % ############################################################################## 
+            % ############# Estimate weights and the basis function parameters #############
+            % ##############################################################################
+
+            switch obj.UseSolver
+                case 1
+                    % Set Options
+                    options = optimset('Algorithm','sqp','display','off');
+
+                    % Actual Optimization
+                    if isempty(obj.InitialBasisParameters)
+                        obj.InitialBasisParameters = ones(obj.nBasisParameters,1);
+                    end
+                    
+                    % Matrix for linear constraint sum(w)=1
+                    A=zeros(nInput,obj.nExperiments*nInput+obj.nBasisParameters);
+                    for iInput=1:nInput
+                        A(iInput,obj.nExperiments*(iInput-1)+1:obj.nExperiments*(iInput))=1;
+                    end
+                    [optPara, minError] = fmincon(@diffVarGram,...
+                                          [ones(obj.nExperiments*nInput,1);obj.InitialBasisParameters],...
+                                          [],[],...
+                                          A,ones(nInput,1),...
+                                          obj.LBBasisParameters,obj.UBBasisParameters,...
+                                          @diffBasisFct,options);
+                case 3
+%                     % Set Options
+%                     switch obj.ShowDetails
+%                         case 0
+%                             showDetails='off';
+%                         case 1
+%                             showDetails='iter';
+%                         otherwise
+%                             error('ShowDetails=%i was not defined',ShowDetails);
+%                     end
+%                     if obj.PopulationSize<=0
+%                         obj.PopulationSize=min(max(10*obj.nInputVar,40),100);
+%                     end
+%                     options = gaoptimset('CrossoverFraction',obj.CR,...
+%                                         'Generations',obj.Generations,...
+%                                         'MigrationFraction',obj.MigrationFraction,...
+%                                         'TimeLimit',obj.TimeLimit,...
+%                                         'display',showDetails,...
+%                                         'PopulationSize',obj.PopulationSize);
+% 
+%                     % Optimization
+%                     [optPara, minError] ...
+%                      = ga(@LeastSquareFunctionWeights,obj.nBasisParameters,...
+%                                [],[],[],[],...
+%                                obj.LBBasisParameters,obj.UBBasisParameters,...
+%                                [],options);
+                otherwise
+                    error('UseSolver=%i is not defined',obj.UseSolver);
+            end
+            
+            % ############################################################################## 
+            % ### Final Step: Calculate function value estimation and standard deviation ###
+            % ##############################################################################
+            % ------------------------------------------------------------------------
+            % Calculate Actual Prediction
+                % Use gaussian elemination instead of the inverting the matrix
+            weights = optPara(1:nInput*obj.nExperiments);
+            weights = reshape(weights,obj.nExperiments,nInput);
+            obj.BasisParameters = optPara(end-obj.nBasisParameters+1:end);
+            obj.BasisParameters 
+            [c,cc]=diffBasisFct(optPara)
+            estimation = (obj.OutputData'*weights)';
+            % ------------------------------------------------------------------------
+            % Calculate the Variance at each Point
+                % Extended Variograms
+                    % Initialization
+            Variogram2 = zeros(obj.nExperiments+2,obj.nExperiments+2);
+            VarGram2 = zeros(obj.nExperiments+2,1);
+                    % Matrix
+            Variogram2(1:obj.nExperiments,1:obj.nExperiments) = obj.Variogram;
+            basis = obj.BasisFct{1}(obj.BasisParameters,obj.InputData);
+                        % Extend by basis function
+            Variogram2(1:obj.nExperiments,obj.nExperiments+obj.nBasisFct) = basis;
+            Variogram2(obj.nExperiments+obj.nBasisFct,1:obj.nExperiments) = basis';
+                        % Extend by the ones
+            Variogram2(1:end-1-obj.nBasisFct,end) = ones(obj.nExperiments,1);
+            Variogram2(end,1:end-1-obj.nBasisFct) = ones(obj.nExperiments,1);
+                    % Vector
+                        % Extend by Basis Functions
+            VarGram2(obj.nExperiments+obj.nBasisFct,1:nInput) = ( obj.BasisFct{1}(obj.BasisParameters,input(:,:)) )';
+                        % Extend by "1"
+            VarGram2(obj.nExperiments+obj.nBasisFct+1,1:nInput) = 1;
+            
+            weights2 = Variogram2\VarGram2;
+            warning('Biggest Difference between the weights is: %d',max(max(abs(weights2(1:end-2,:)-weights))));
+            sigmaEstimation = VarGram2'*weights2;
+                % Only the diagonal are the number we are looking for
+                % var'*InvVariogram*var
+                % var .. vector of variogram between new data points and existing
+                % ones
+                % InvVariogram ... inverse of the extended variogramm matrix
+            sigmaEstimation = diag(sigmaEstimation);
+            sigmaEstimation = (sigmaEstimation).^(1/2);
+            % Use only real SD
+            sigmaEstimation = real(sigmaEstimation);
+            
+            % Final Output
+            Output = [estimation,sigmaEstimation];
+            
+            otherwise
+                error('PredictionType = %i is not defined',obj.PredictionType);
+        
+    end
+    
+    %% Nested least square function for NonLinearKriging ( case 5 ) 
+    function [output] = diffVarGram(varargin)
+        % This function calculates the sum of the estimated variances of 
+        % the prediction error. The Input is an array which contains the 
+        % weights at the beginning and the parameters of the basis function 
+        % at the end
+        % [output] = diffVarGram([weights;parameters])
+        weight = varargin{1}(1:nInput*obj.nExperiments);
+        weight = reshape(weight,obj.nExperiments,nInput);
+        output = sum(diag((2*weight'*VarGramm - weight'*obj.Variogram*weight)));
+    end
+    function [c,output] = diffBasisFct(varargin)
+        % This function calculates the differences between the 
+        % value of the basis function at the prediction points and the 
+        % weighted sum of values of the basis function for the input data. 
+        % The Input is an array which contains the weights at the beginning 
+        % and the parameters of the basis function at the end. Additional
+        % output is 0 since this represent the inequality constraint which
+        % does not exist but, has to be provided
+        % [0,output] = diffBasisFct([weights;parameters])
+        weight = varargin{1}(1:nInput*obj.nExperiments);
+        weight = reshape(weight,obj.nExperiments,nInput);
+        p      = varargin{1}(end-obj.nBasisParameters+1:end);
+        c = 0;
+        output = (weight'*obj.BasisFct{1}(p,obj.InputData) - obj.BasisFct{1}(p,input)).^2;
+    end

@@ -1,0 +1,4 @@
+windows:
+mex mainCalcEIHV3D.cpp ehvi_multi.cpp helper.cpp
+linux:
+mex -I/vol/home/yangk/local/MATLAB/R2014b/extern/include -O CXXFLAGS="\$CXXFLAGS -std=c++0x"  mainCalcEIHV3D.cpp ehvi_multi.cpp helper.cpp

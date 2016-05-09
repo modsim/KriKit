@@ -1,0 +1,4 @@
+windows:
+mex mainMexCalcPcover.cpp calculatePcoverOrPsigma.cpp
+linux:
+mex -I/vol/home/yangk/local/MATLAB/R2014b/extern/include -O CXXFLAGS="\$CXXFLAGS -std=c++0x"  mainMexCalcPcover.cpp calculatePcoverOrPsigma.cpp
