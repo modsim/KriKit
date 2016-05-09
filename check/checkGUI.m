@@ -22,7 +22,7 @@ testPlots
 testANOVA
 %
 clc
-disp('Initialization finished')
+disp('Check has finished')
 
 % =============================================================================
 %  KriKit - Kriging toolKit

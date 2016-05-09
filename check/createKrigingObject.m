@@ -6,8 +6,8 @@ KrigingObject = AnalyzeKriging();
 KrigingObject.addKrigingObject(2,'TestObj');
 KrigingObject.KrigingObjects{1}.setNormInput(1)
 KrigingObject.KrigingObjects{1}.setNormOutput(1)
-KrigingObject.KrigingObjects{1}.setInputData(load(strcat(currentDir,'/testData/input1.txt')))
-KrigingObject.KrigingObjects{1}.setOutputData(load(strcat(currentDir,'/testData/output1.txt'))')
+KrigingObject.KrigingObjects{1}.setInputData(load(strcat(currentDir,'/check/testData/input1.txt')))
+KrigingObject.KrigingObjects{1}.setOutputData(load(strcat(currentDir,'/check/testData/output1.txt'))')
 
 disp('Kriging Object was created')
 % =============================================================================
