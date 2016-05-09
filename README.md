@@ -19,3 +19,7 @@ KriKit is implemented in Matlab(2013b) and can be used either via command line o
 
 ## Documentation
 Current documentation for the KriKit-GUI can be found in (gitHub-link)
+||||||| merged common ancestors
+
+# KriKit
+

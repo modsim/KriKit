@@ -15,7 +15,19 @@
 # Simulink Code Generation
 slprj/
 
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
 # Ignore GoodSyn
 *._gs
 *.log
 _gsdata_/
+
+# Executables
+*.exe
+*.out
+*.app
+*.avi
