@@ -3,18 +3,23 @@
 
 The Kriging toolKit (KriKit) is developed at the Institute of Bio- and Geosciences 1 (IBG-1) of Forschungszentrum Jülich (FZJ) under supervision of Lars Freier and Dr. Eric von Lieres.
 
-KriKit allows the user to apply Kriging on all kind of problems. Kriging is an interpolation method commonly applied in empirical modeling for approximating functional relationships between impact factors and system response. The interpolation is based on a statistical analysis of given data and can optionally include a priori defined trend functions.
+KriKit features are based on Kriging (also called Gaussian Process Regression) and applicable for data analysis and experimental design. Kriging is an approximation technique where the functional relationships between input and output variables are estimated based on a covariance model. It provides not only predictions at arbitrary points but also an automatically generated estimation of the model prediction error which can be used for further statistical studies, such as optimization. KriKit also contains several tool for data visualization, for instance 3D-plots and movies.
 
-KriKit is implemented in Matlab(2015b) and can be used either via command line or via a user friendly GUI. KriKit is freely distributed (under the terms of the GPLv3) as a contribution to the scientific community. If you find it useful for your own work, we would appreciate acknowledgements of the KriKit software.
+KriKit was implemented and tested using Matlab(2015b). KriKit is freely distributed (under the terms of the GPLv3) as a contribution to the scientific community. If you find it useful for your own work, we would appreciate acknowledgements of the KriKit software.
 
 ## Features
-* User friendly GUI
-* Efficient algorithm for solving covariogram parameter estimation supporting Mathwork's *Optimization Toolbox*, *Global Optimization Toolbox*, and *Parallel Computing Toolbox*
-* Efficient vectorized Kriging prediction
-* A varity of visualization tools for a better analysis of Kriging predictions
-* Statistical analysis on basis of Kriging predictions
+- Simple way of creating and managing of one or several Kriging models
+- Kriging prediction can be visualized as
+	- 2D/3D Interpolation plot
+	- Screening plots
+	- Movies
+	- ...
+- Optimization based on expected improvement
+- Visualization features can be used via a graphical user interface.
 
 ## Get KriKit
+Link to release version is coming soon.
 
 ## Documentation
-Current documentation for the KriKit-GUI can be found in (gitHub-link)
+Documentation is in progress.
+
