@@ -369,22 +369,36 @@ classdef AnalyzeKriging<handle
             end
         end
         % ----------------------------------------------------------------
-        function [KrigingPrediction_InterpolationCell]=getKrigingPrediction(obj,InterpolationType)
-            % [KrigingPrediction_InterpolationCell]=getKrigingPrediction(obj,InterpolationType)
+        function [KrigingPrediction_InterpolationCell]=getKrigingPrediction(obj,KrigingObjectIndex,InterpolationType)
+            % [KrigingPrediction_InterpolationCell]=getKrigingPrediction(obj,KrigingObjectIndex,InterpolationType)
             %
-            % KrigingPrediction_Interpolation3D is a cell. The 1st column
+            % KrigingPrediction_Interpolation2D/3D is a cell. The 1st column
             % contains a matrix with the prediciton results, the 2nd column
             % containts a matrix with the values of the inputs which are
             % used for the prediction, the 3rd cell contains the indices of
             % the analyzed input variable. The prediction maxtrix itself
             % has 2 column where the 1st column contains the actual
             % prediction value and the 2nd column contains the estimated
-            % error variance
+            % error variance. In case of InterpolationType=4, the 4th
+            % column contains the unique value of the individual input
+            % variables
+            %
+            % Input:
+            % KrigingObjectIndex ... index of the kriging object which should
+            %                        be used in this function.
+            % - InterpolationType ... defines which function was used for
+            %                         calculating the interpolation
+            %       2 ... calcInterpolation_2D
+            %       3 ... calcInterpolation_3D
+            %       4 ... calcInterpolation_nD
+            % 
             switch InterpolationType
                 case 2
-                    KrigingPrediction_InterpolationCell = obj.KrigingPrediction_Interpolation2D;
+                    KrigingPrediction_InterpolationCell = {obj.KrigingPrediction_Interpolation2D{KrigingObjectIndex,:}};
                 case 3
-                    KrigingPrediction_InterpolationCell = obj.KrigingPrediction_Interpolation3D;
+                    KrigingPrediction_InterpolationCell = {obj.KrigingPrediction_Interpolation3D{KrigingObjectIndex,:}};
+                case 4
+                    KrigingPrediction_InterpolationCell = {obj.KrigingPrediction_InterpolationnD{KrigingObjectIndex,:}};
                 otherwise
                     error('InterpolationType %i is not allowed',InterpolationType)
             end

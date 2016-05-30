@@ -6,9 +6,9 @@ function [inputData,indexValid]=doTestForOptimality(obj,varargin)
 % Red stars indicate potentially optimum and blue stars indicate points
 % which are significant suboptimal with a significance level of
 % alpha="SignificanceLevel"
-% This test ist based on a z-test. "inputData" contains sample points at which
-% z-test was applied. "indexValid" is a bool vector, each entrie is
-% associated with the associated entrie in inputData and is true if this
+% This test is based on a z-test. "inputData" contains sample points at
+% which z-test was applied. "indexValid" is a bool vector, each entry is
+% associated with the associated entry in inputData and is true if this
 % point is accepted as part of the optimal region.
 % 
 % Input:
@@ -43,6 +43,13 @@ function [inputData,indexValid]=doTestForOptimality(obj,varargin)
     KrigingObjectIndex = varargin{1};
     dimensionInterpolation = varargin{2};
     testValue = varargin{3};
+    
+    % Decide which pair wise combination is considered in case of Screening
+    if length(varargin)>3
+        iCombination = varargin{4};
+    else
+        iCombination = 0;
+    end
     
     % In case of mutual Kriging interpolation, the prediction of all
     % objects is saved redundant, such that only the first index should

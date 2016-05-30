@@ -52,7 +52,7 @@ function [M,IND] = combn(V,N)
 %      out by Wilson).
 % 4.3 (apr 2013) make a reference to COMBNSUB
 
-error(nargchk(2,2,nargin)) ;
+% error(nargchk(2,2,nargin)) ;
 
 if isempty(V) || N == 0,
     M = [] ;

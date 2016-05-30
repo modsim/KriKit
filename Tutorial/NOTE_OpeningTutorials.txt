@@ -1,0 +1,1 @@
+HTML Files should be opened using Matlab. Hyperlinks only work when "addPath.m" has been run.

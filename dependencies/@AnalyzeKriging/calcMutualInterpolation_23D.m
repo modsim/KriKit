@@ -35,7 +35,11 @@ function []=calcMutualInterpolation_23D(obj,varargin)
 % - ShowBasisFct ... if true, then the trend function is plotted
 %                    instead of the KrigingPrediction
 %
-% You can get: - 
+% You can get: 
+% - KrigingPrediction_Interpolation2D/3D ... save the interpolation results
+%                                            for more information see
+%                                            documentation of
+%                                            getKrigingPrediction 
 %
 % Copyright 2014-2016: Lars Freier, Eric von Lieres
 % See the license note at the end of the file.

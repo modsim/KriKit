@@ -75,6 +75,10 @@ elseif obj.NormColors==1&&obj.ShowColorBar==1&&nInputVar==2
     colorbar('location','East')
 end
 
+% In case of "Optimum", output is binary and a color bar is not needed
+if strcmp(Objective,'Optimum')
+    colorbar('off')
+end
 %% Nested Functions
 function [nCombinations,nPossibleCombi,minEstimation,maxEstimation,plottingObjective] = doInitialiaztion(KrigingObjectIndex,Objective)
     nCombinations = length(obj.KrigingPrediction_Screening{KrigingObjectIndex,1});
@@ -116,7 +120,7 @@ function [] = createContourPlot(iCombination)
             else
                 testValue = [];
             end
-            [inputDataOpt,indexValid] = doTestForOptimality(obj,KrigingObjectIndex,4,testValue);
+            [inputDataOpt,indexValid] = doTestForOptimality(obj,KrigingObjectIndex,4,testValue,iCombination);
              indexInvalid = ~indexValid;  
 
         otherwise

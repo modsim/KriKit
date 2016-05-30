@@ -1,3 +1,5 @@
+This is a List of Open Scource Tools used in KriKit
+
 - Genetic Algorithm in "ga2()" is an adaptation of the optimizaer implemented by Chipperfield and be downloaded from http://www.shef.ac.uk/acse/research/ecrg/gat.html and http://codem.group.shef.ac.uk/index.php/ga-toolbox. Introduction Paper: Chipperfield, A. J., and P. J. Fleming. "The MATLAB genetic algorithm toolbox." Applied Control Techniques Using  MATLAB, IEE Colloquium on. IET, 1995.  
 
 - "linspaceNDim()" was implemented by Steeve AMBROISE (contact sambroise@gmail.com)

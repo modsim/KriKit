@@ -1,0 +1,354 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Tutorial: How to statistically analyze Kriging results</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-05-30"><meta name="DC.source" content="tutorialStatisticalAnalyze.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>Tutorial: How to statistically analyze Kriging results</h1><!--introduction--><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Test Function</a></li><li><a href="#2">Initialization</a></li><li><a href="#3">Classical Design of Experiment Analysis (ANOVA)</a></li><li><a href="#9">Optimality Analysis</a></li><li><a href="#10">Expected Improvement</a></li></ul></div><h2>Test Function<a name="1"></a></h2><p>The test function as follows:</p><p><img src="tutorialStatisticalAnalyze_eq06559173809755883972.png" alt="$$f_{\rm{Test}} = \frac{10x_{1}}{5 + x_{1}}\sin\left( x_{2} \right) +&#xA;x_{3}$$"></p><p>That is, the output is related to the first input variable by a Michaelis Menten curve(steep increase for small values followed by a plateau). The second input variable leads to oscillation and the third input variable leads to an linear monotonically increase. The effect of the first and second input are coupled with each other.</p><p>For a better visualization, pair-wise combination of input variables are plotted against the output. Remaining input variable was hold constant at the value of 2.</p><pre class="codeinput">close <span class="string">all</span>
+visualizeTestFunction();
+</pre><img vspace="5" hspace="5" src="tutorialStatisticalAnalyze_01.png" alt=""> <img vspace="5" hspace="5" src="tutorialStatisticalAnalyze_02.png" alt=""> <img vspace="5" hspace="5" src="tutorialStatisticalAnalyze_03.png" alt=""> <h2>Initialization<a name="2"></a></h2><p>Step 1: Create a new Kriging analysis object. For more details see documentation of <a href="matlab:open(fullfile('tutorialCreatingObject.html'))">tutorialCreatingObject</a></p><pre class="codeinput">[KrigingObj]=tutorialCreatingObject(false);
+
+<span class="comment">% Remember the Currently used object</span>
+indexKrigingObj = 1;
+nInputVar = KrigingObj.KrigingObjects{indexKrigingObj}.getnInputVar;
+</pre><h2>Classical Design of Experiment Analysis (ANOVA)<a name="3"></a></h2><p>Classical design of experiments is a powerful tool for efficiently analysis how input variables influence the ouput variable. It allows not only to understand single effects but also how input variables interact with each other.</p><p>Classical design of experiments is mainly based on parameter estimation of polynomials. Parameter estimation can naturally make use of covariance information of measurments. Kriging automatically provides an estimated covariance matrix can therefore contribute to higher accuracy and statistical reliablity.</p><p>Central composite design analysis allows the estimation of linear, quadratic effects and pair-wise interactions. It is based on a full factorial design with additional "start points". If <i>ShowDetail</i> is active, a table is displayed at the command window with following structure:</p><div><ul><li>Para Combination: Describe which effect is estimated in the associated row</li><li>Mean(Coefficient): Estimated effect value</li><li>Std(Coefficient): Estimation Error</li><li>tValue: Statistical value indicating significance associated effect</li><li>P(&gt;|t|): Probability of beeing insignificant. Probabilitied under a defined thershold (e.g. 0.05) can be considered as significant</li></ul></div><pre class="codeinput">KrigingObj.setShowDetails(true)
+KrigingObj.doCompositeDesignAnalysis(1)
+</pre><p>Receive Information</p><pre class="codeoutput">Analysis Result: 
+Para Combination              |Mean(Coefficient)|Std(Coefficient)|         tValue|        P(&gt;|t|)|
+Intercept                     |     2.214568e-01|    8.177437e-01|   2.708145e-01|   7.973577e-01|
+Input 1                       |    -9.057811e-01|    2.367225e-02|  -3.826342e+01|   2.297270e-07|
+Input 2                       |    -9.067613e-01|    2.367225e-02|  -3.830483e+01|   2.284916e-07|
+Input 3                       |     4.999930e+00|    2.367225e-02|   2.112149e+02|   4.514167e-11|
+Input 1*Input 2               |    -9.066381e-01|    2.367326e-02|  -3.829799e+01|   2.286950e-07|
+Input 1*Input 3               |     1.095934e-12|    2.367326e-02|   4.629420e-11|   1.000000e+00|
+Input 2*Input 3               |    -7.717441e-14|    2.367326e-02|  -3.259983e-12|   1.000000e+00|
+Input 1^2                     |     4.711986e+00|    1.140411e+00|   4.131830e+00|   9.068815e-03|
+Input 2^2                     |    -5.282005e+00|    1.140411e+00|  -4.631666e+00|   5.675228e-03|
+Input 3^2                     |     4.441140e+00|    1.140411e+00|   3.894331e+00|   1.147468e-02|
+</pre><p>All information in the table can also be obtained using the <i>get</i>-functions:</p><pre class="codeinput">KrigingObj.getANOVACoefficients;
+KrigingObj.getANOVAStdOfCoefficients;
+KrigingObj.getANOVATvalue;
+KrigingObj.getANOVAPvalue;
+</pre><p>The full factorial design allows an estimation of all possible interactions. It is a saturated design (no degree of freedom) and it is therfore not possible to perform test for significance.</p><pre class="codeinput">KrigingObj.doFullFactorialAnalysis(1)
+</pre><pre class="codeoutput">Legend: 
+A := Input 1
+B := Input 2
+C := Input 3
+Analysis Result: 
+Para Combination              |Mean(Coefficient)|Std(Coefficient)|         tValue|        P(&gt;|t|)|
+Intercept                     |     4.093330e+00|    2.367348e-02|   1.729079e+02|   0.000000e+00|
+A                             |    -9.058094e-01|    2.367331e-02|  -3.826289e+01|   0.000000e+00|
+B                             |    -9.067478e-01|    2.367331e-02|  -3.830253e+01|   0.000000e+00|
+C                             |     4.999955e+00|    2.367331e-02|   2.112064e+02|   0.000000e+00|
+AB                            |    -9.066381e-01|    2.367326e-02|  -3.829799e+01|   0.000000e+00|
+AC                            |     8.894928e-13|    2.367326e-02|   3.757374e-11|   0.000000e+00|
+BC                            |    -7.152965e-13|    2.367326e-02|  -3.021538e-11|   0.000000e+00|
+ABC                           |     1.277012e-12|    2.367319e-02|   5.394337e-11|   0.000000e+00|
+</pre><h2>Optimality Analysis<a name="9"></a></h2><p>In case of optimization, it is necessary to identify regions which lead to output values that are significant bigger (or smaller) than remaining input space. Under the assumption of a Gaussian process, Kriging provides both model prediction and prediction error. These statistical properties can be used for a statistical test, such as a z-test</p><p>More Information about the visualization Tools you can find here: <a href="matlab:open(fullfile('tutorialVisualizingData.html'))">tutorialVisualizingData</a></p><pre class="codeinput"><span class="comment">% Determine optimum for a single input variable</span>
+KrigingObj.setMinMax(indexKrigingObj,1) <span class="comment">% Decide for a Maximization Problem</span>
+KrigingObj.setSignificanceLevel(0.075) <span class="comment">% By default 0.05, the smaller the more restrictive the test.</span>
+KrigingObj.calcInterpolation_2D(indexKrigingObj,2,[1,3],[2,2])
+KrigingObj.plotOptimum2D(indexKrigingObj);
+<span class="comment">% Set format appropriate for documentation</span>
+hLegend=legend;
+set(hLegend,<span class="string">'Location'</span>,<span class="string">'South'</span>)
+set(gcf,<span class="string">'Position'</span>, [100, 100, 330, 330/4*3]);
+set(gca,<span class="string">'FontSize'</span>,10)
+
+
+<span class="comment">% Determine optimum for two input variables</span>
+KrigingObj.calcInterpolation_3D(indexKrigingObj,[1,2],3,2)
+KrigingObj.plotOptimum3D(indexKrigingObj);
+<span class="comment">% Set format appropriate for documentation</span>
+hLegend=legend;
+set(hLegend,<span class="string">'Location'</span>,<span class="string">'NorthWest'</span>)
+set(gcf,<span class="string">'Position'</span>, [100, 100, 330, 330/4*3]);
+set(gca,<span class="string">'FontSize'</span>,10)
+
+<span class="comment">% Determine optimum in a screening plot</span>
+KrigingObj.setReferencePoint(ones(1,nInputVar)*2)
+KrigingObj.calcScreeningAnalysis(1) <span class="comment">% Calculate interpolation</span>
+KrigingObj.plotScreeningAnalysis(1,<span class="string">'Optimum'</span>) <span class="comment">% Plot and test for optimum</span>
+<span class="comment">% Set format appropriate for documentation</span>
+set(gcf,<span class="string">'Position'</span>, [100, 100, 700, 700/4*3]);
+set(gca,<span class="string">'FontSize'</span>,10)
+</pre><img vspace="5" hspace="5" src="tutorialStatisticalAnalyze_04.png" alt=""> <img vspace="5" hspace="5" src="tutorialStatisticalAnalyze_05.png" alt=""> <img vspace="5" hspace="5" src="tutorialStatisticalAnalyze_06.png" alt=""> <h2>Expected Improvement<a name="10"></a></h2><p>Expected Improvement is one of most powerfull tools of Kriging when it comes to optimization. In this context, potential improvement is defined by the chance that a measurement at an unknown location lead to a better (higher, in case maximization) output value compare to current best result.</p><p><img src="tutorialStatisticalAnalyze_eq17574817553638119867.png" alt="$$I\left( \bf{x} \right) =&#xA;\left\{ \matrix{ 0 &amp; Z\left( x \right) < Z_{\rm{opt}} \cr&#xA;Z\left( x \right) - Z_{\rm{opt}} &amp; \rm{else} \cr}\right. $$"></p><p>In the context of Kriging, output variables are Gaussian distributed and the expected improvement can be calculated as</p><p><img src="tutorialStatisticalAnalyze_eq10753914677135942282.png" alt="$$E\left( I\left( x \right) \right) = \int_{0}^{\infty} I\left( x \right)p\left( I\left( x \right) \right)dx&#xA;= \sigma\left( {x} \right)\left( u\Phi\left( u \right) +&#xA;\phi\left( u \right) \right), \rm{with}$$&#xA;$${u} = \frac{E\left( Z^{*}\left( x \right) \right) - Z_{\rm{opt}}}{\sigma\left( Z\left( x \right) \right)}$$"></p><p>The expected improvement represents a compromise between good prediction values and prediction error. Consequently, locations with good prediction values but also high prediction variance have high expected improvement values.</p><p>Expected improvement can be calculated at any arbitrary point using</p><pre class="codeinput"><span class="comment">% Calculate expected improvement at point of interest</span>
+pointOfInterest = [9,8,10];
+KrigingObj.calcExpectedImprovement(indexKrigingObj,pointOfInterest)
+</pre><p>Expected Improvement can also be visualized in the same manner as the model prediction</p><pre class="codeinput"><span class="comment">% 2D</span>
+KrigingObj.calcInterpolation_2D(indexKrigingObj,2,[1,3],pointOfInterest([1,3]))
+KrigingObj.plotExpectedImprovement_2D(indexKrigingObj);
+<span class="comment">% Set format appropriate for documentation</span>
+hLegend=legend;
+set(hLegend,<span class="string">'Location'</span>,<span class="string">'South'</span>)
+set(gcf,<span class="string">'Position'</span>, [100, 100, 330, 330/4*3]);
+set(gca,<span class="string">'FontSize'</span>,10)
+
+
+<span class="comment">% Determine optimum for two input variables</span>
+KrigingObj.calcInterpolation_3D(indexKrigingObj,[1,2],3,pointOfInterest(3))
+KrigingObj.plotExpectedImprovement_3D(indexKrigingObj);
+<span class="comment">% Set format appropriate for documentation</span>
+campos([-22.9507  -44.2029    2.8223])
+hLegend=legend;
+set(hLegend,<span class="string">'Location'</span>,<span class="string">'NorthWest'</span>)
+set(gcf,<span class="string">'Position'</span>, [100, 100, 330, 330/4*3]);
+set(gca,<span class="string">'FontSize'</span>,10)
+
+<span class="comment">% Determine optimum in a screening plot</span>
+KrigingObj.setReferencePoint(pointOfInterest)
+KrigingObj.calcScreeningAnalysis(1) <span class="comment">% Calculate interpolation</span>
+KrigingObj.plotScreeningAnalysisExpectedImprovement(1) <span class="comment">% Plot and test for optimum</span>
+<span class="comment">% Set format appropriate for documentation</span>
+set(gcf,<span class="string">'Position'</span>, [100, 100, 700, 700/4*3]);
+set(gca,<span class="string">'FontSize'</span>,10)
+</pre><pre class="codeoutput">
+ans =
+
+    0.2598
+
+</pre><img vspace="5" hspace="5" src="tutorialStatisticalAnalyze_07.png" alt=""> <img vspace="5" hspace="5" src="tutorialStatisticalAnalyze_08.png" alt=""> <img vspace="5" hspace="5" src="tutorialStatisticalAnalyze_09.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Tutorial: How to statistically analyze Kriging results
+%
+%
+
+%% Test Function
+% The test function as follows:
+%
+% $$f_{\rm{Test}} = \frac{10x_{1}}{5 + x_{1}}\sin\left( x_{2} \right) +
+% x_{3}$$
+%
+% That is, the output is related to the first input variable by a Michaelis
+% Menten curve(steep increase for small values followed by a plateau). The
+% second input variable leads to oscillation and the third input variable
+% leads to an linear monotonically increase. The effect of the
+% first and second input are coupled with each other.
+%
+% For a better visualization, pair-wise combination of input variables are
+% plotted against the output. Remaining input variable was hold constant at
+% the value of 2.
+close all
+visualizeTestFunction();
+
+%% Initialization
+% Step 1: Create a new Kriging analysis object. For more details see
+% documentation of <matlab:open(fullfile('tutorialCreatingObject.html'))
+% tutorialCreatingObject>
+[KrigingObj]=tutorialCreatingObject(false);
+
+% Remember the Currently used object
+indexKrigingObj = 1;
+nInputVar = KrigingObj.KrigingObjects{indexKrigingObj}.getnInputVar;
+
+%% Classical Design of Experiment Analysis (ANOVA)
+% Classical design of experiments is a powerful tool for efficiently
+% analysis how input variables influence the ouput variable. It allows not
+% only to understand single effects but also how input variables
+% interact with each other.
+%
+% Classical design of experiments is mainly based on parameter estimation
+% of polynomials. Parameter estimation can naturally make use of covariance
+% information of measurments. Kriging automatically provides an estimated
+% covariance matrix can therefore contribute to higher accuracy and
+% statistical reliablity.
+
+%%% 
+% Central composite design analysis allows the estimation of linear,
+% quadratic effects and pair-wise interactions. It is based on a full
+% factorial design with additional "start points". If _ShowDetail_ is
+% active, a table is displayed at the command window with following
+% structure:
+%%
+% * Para Combination: Describe which effect is estimated in the associated
+% row
+% * Mean(Coefficient): Estimated effect value
+% * Std(Coefficient): Estimation Error
+% * tValue: Statistical value indicating significance associated effect
+% * P(>|t|): Probability of beeing insignificant. Probabilitied under a
+% defined thershold (e.g. 0.05) can be considered as significant
+KrigingObj.setShowDetails(true)
+KrigingObj.doCompositeDesignAnalysis(1)
+
+%%% 
+% Receive Information
+
+%%
+% All information in the table can also be obtained using the
+% _get_-functions:
+KrigingObj.getANOVACoefficients;
+KrigingObj.getANOVAStdOfCoefficients;
+KrigingObj.getANOVATvalue;
+KrigingObj.getANOVAPvalue;
+%%
+% The full factorial design allows an estimation of all possible
+% interactions. It is a saturated design (no degree of freedom) and it is
+% therfore not possible to perform test for significance.
+KrigingObj.doFullFactorialAnalysis(1)
+
+
+%% Optimality Analysis
+% In case of optimization, it is necessary to identify regions which lead
+% to output values that are significant bigger (or smaller) than remaining
+% input space. Under the assumption of a Gaussian process, Kriging provides
+% both model prediction and prediction error. These statistical properties
+% can be used for a statistical test, such as a z-test
+%
+% More Information about the visualization Tools you can find here:
+% <matlab:open(fullfile('tutorialVisualizingData.html'))
+% tutorialVisualizingData>
+
+% Determine optimum for a single input variable
+KrigingObj.setMinMax(indexKrigingObj,1) % Decide for a Maximization Problem
+KrigingObj.setSignificanceLevel(0.075) % By default 0.05, the smaller the more restrictive the test.
+KrigingObj.calcInterpolation_2D(indexKrigingObj,2,[1,3],[2,2])
+KrigingObj.plotOptimum2D(indexKrigingObj);
+% Set format appropriate for documentation
+hLegend=legend;
+set(hLegend,'Location','South')
+set(gcf,'Position', [100, 100, 330, 330/4*3]);
+set(gca,'FontSize',10)
+
+
+% Determine optimum for two input variables
+KrigingObj.calcInterpolation_3D(indexKrigingObj,[1,2],3,2)
+KrigingObj.plotOptimum3D(indexKrigingObj);
+% Set format appropriate for documentation
+hLegend=legend;
+set(hLegend,'Location','NorthWest')
+set(gcf,'Position', [100, 100, 330, 330/4*3]);
+set(gca,'FontSize',10)
+
+% Determine optimum in a screening plot
+KrigingObj.setReferencePoint(ones(1,nInputVar)*2)
+KrigingObj.calcScreeningAnalysis(1) % Calculate interpolation
+KrigingObj.plotScreeningAnalysis(1,'Optimum') % Plot and test for optimum
+% Set format appropriate for documentation
+set(gcf,'Position', [100, 100, 700, 700/4*3]);
+set(gca,'FontSize',10)
+
+%% Expected Improvement
+% Expected Improvement is one of most powerfull tools of Kriging when it
+% comes to optimization. In this context, potential improvement is defined
+% by the chance that a measurement at an unknown location lead to a better
+% (higher, in case maximization) output value compare to current best
+% result.
+% 
+% $$I\left( \bf{x} \right) = 
+% \left\{ \matrix{ 0 & Z\left( x \right) < Z_{\rm{opt}} \cr
+% Z\left( x \right) - Z_{\rm{opt}} & \rm{else} \cr}\right. $$
+% 
+% In the context of Kriging, output variables are Gaussian distributed and
+% the expected improvement can be calculated as 
+%
+% $$E\left( I\left( x \right) \right) = \int_{0}^{\infty} I\left( x \right)p\left( I\left( x \right) \right)dx
+% = \sigma\left( {x} \right)\left( u\Phi\left( u \right) +
+% \phi\left( u \right) \right), \rm{with}$$ 
+% $${u} = \frac{E\left( Z^{*}\left( x \right) \right) - Z_{\rm{opt}}}{\sigma\left( Z\left( x \right) \right)}$$
+%
+% The expected improvement represents a compromise between good prediction
+% values and prediction error. Consequently, locations with good prediction
+% values but also high prediction variance have high expected improvement
+% values.
+%
+% Expected improvement can be calculated at any arbitrary point using 
+
+% Calculate expected improvement at point of interest
+pointOfInterest = [9,8,10];
+KrigingObj.calcExpectedImprovement(indexKrigingObj,pointOfInterest)
+
+%%%
+% Expected Improvement can also be visualized in the same manner as
+% the model prediction
+
+% 2D
+KrigingObj.calcInterpolation_2D(indexKrigingObj,2,[1,3],pointOfInterest([1,3]))
+KrigingObj.plotExpectedImprovement_2D(indexKrigingObj);
+% Set format appropriate for documentation
+hLegend=legend;
+set(hLegend,'Location','South')
+set(gcf,'Position', [100, 100, 330, 330/4*3]);
+set(gca,'FontSize',10)
+
+
+% Determine optimum for two input variables
+KrigingObj.calcInterpolation_3D(indexKrigingObj,[1,2],3,pointOfInterest(3))
+KrigingObj.plotExpectedImprovement_3D(indexKrigingObj);
+% Set format appropriate for documentation
+campos([-22.9507  -44.2029    2.8223])
+hLegend=legend;
+set(hLegend,'Location','NorthWest')
+set(gcf,'Position', [100, 100, 330, 330/4*3]);
+set(gca,'FontSize',10)
+
+% Determine optimum in a screening plot
+KrigingObj.setReferencePoint(pointOfInterest)
+KrigingObj.calcScreeningAnalysis(1) % Calculate interpolation
+KrigingObj.plotScreeningAnalysisExpectedImprovement(1) % Plot and test for optimum
+% Set format appropriate for documentation
+set(gcf,'Position', [100, 100, 700, 700/4*3]);
+set(gca,'FontSize',10)
+##### SOURCE END #####
+--></body></html>

@@ -26,14 +26,15 @@ function [inputData,indexValid]=plotOptimum23D(obj,varargin)
 %                part of the optimal region.
 %
 % You can set 
-% - MinMax ... Vector which contains for each kriging objective 1 or -1
+% - MinMax ... Vector which contains for each Kriging objective 1 or -1
 %              when the optimization goal is maximization or minimization,
 %              respectively. By default minimization
 % - useDataPointsAsComparisonPoint ... Decide if z-test shall be done
-%                                      w.r.t best sample value. If false,
-%                                      z-test is done w.r.t best
-%                                      interpolation value (default false)
-% - SignificanceLevel ... Signifcance level (error Erro Type I) used for z-test
+%                                      w.r.t the best sample value. If
+%                                      false, z-test is done w.r.t the best
+%                                      interpolation value (by default
+%                                      false)
+% - SignificanceLevel ... Significance level (error Type I) used for z-test
 %
 % You can get : -
 % 

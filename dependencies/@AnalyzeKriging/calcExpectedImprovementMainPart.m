@@ -10,7 +10,9 @@ function [ExpectedImprovement] = calcExpectedImprovementMainPart(obj,varargin)
 %                           [nPointsX1]
 %
 %
-% You can set: -
+% You can set: 
+% - MinMax ... Decide if optimization problem is maximization or
+%              minimization problem
 %
 % You can get: -
 %

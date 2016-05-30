@@ -22,6 +22,11 @@ function [] = calcInterpolation_nD(obj,varargin)
 %   variable fix. Therefore, for nPlots=1 InputVarIndices has only 2
 %   columns instead of 3 and ConstantInputVarIndices = [] and
 %   ConstantInputVarValue=[]
+% 
+% Note: For a simple contour plot (varying only two input variables), set
+% nPlots = 1, define two varied variable indices in "InputVarIndices" and
+% set remaining variables fix using "ConstantInputVarIndices",
+% "ConstantInputVarValue"
 %
 % For further details about the Kriging interpolation see documentation of
 % "calcMutualInterpolation_23D()" 
@@ -32,8 +37,11 @@ function [] = calcInterpolation_nD(obj,varargin)
 %            is a nPlots X nPlots subplot
 % 
 % 
-% You can get: -
-% 
+% You can get: 
+% - KrigingPrediction_Interpolation_nD ... save the interpolation results
+%                                  for more information see documentation
+%                                  of getKrigingPrediction 
+%
 % Copyright 2014-2016: Lars Freier, Eric von Lieres
 % See the license note at the end of the file.
 

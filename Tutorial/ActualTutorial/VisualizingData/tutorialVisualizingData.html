@@ -1,0 +1,263 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>tutorialVisualizingData</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-05-18"><meta name="DC.source" content="tutorialVisualizingData.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Tutorial: How to visualize data</a></li><li><a href="#2">Test Function</a></li><li><a href="#3">Initialization</a></li><li><a href="#4">2D - Interpolation Plots</a></li><li><a href="#6">3D Interpolation plots</a></li><li><a href="#8">Screening Plots</a></li><li><a href="#9">nD Interpolation plots</a></li><li><a href="#10">MakeMovie</a></li></ul></div><h2>Tutorial: How to visualize data<a name="1"></a></h2><pre class="codeinput">close <span class="string">all</span>
+</pre><h2>Test Function<a name="2"></a></h2><p>The test function as follows:</p><p><img src="tutorialVisualizingData_eq06559173809755883972.png" alt="$$f_{\rm{Test}} = \frac{10x_{1}}{5 + x_{1}}\sin\left( x_{2} \right) +&#xA;x_{3}$$"></p><p>That is, the output is related to the first input variable by a Michaelis Menten curve(steep increase for small values followed by a plateau). The second input variable leads to oscillation and the third input variable leads to an linear monotonically increase. The effect of the first and second input are coupled with each other.</p><p>For a better visualization, pair-wise combination of input variables are plotted against the output. Remaining input variable was hold constant at the value of 2.</p><pre class="codeinput">visualizeTestFunction();
+</pre><img vspace="5" hspace="5" src="tutorialVisualizingData_01.png" alt=""> <img vspace="5" hspace="5" src="tutorialVisualizingData_02.png" alt=""> <img vspace="5" hspace="5" src="tutorialVisualizingData_03.png" alt=""> <h2>Initialization<a name="3"></a></h2><p>Step 1: Create a new Kriging analysis object. For more details see documentation of <a href="matlab:open(fullfile('tutorialCreatingObject.html'))">tutorialCreatingObject</a></p><pre class="codeinput">[KrigingObj]=tutorialCreatingObject(false);
+
+<span class="comment">% Remember the Currently used object</span>
+indexKrigingObj = 1;
+nInputVar = KrigingObj.KrigingObjects{indexKrigingObj}.getnInputVar;
+</pre><h2>2D - Interpolation Plots<a name="4"></a></h2><p>The 2D interpolation depicts the estimated functional relationship between the output variable and one input variable. The remaining input variables are fixed to a user defined value. Red dots indicate the data points</p><p>Confidence bounds are by default to prediction value <img src="tutorialVisualizingData_eq01603813172210380278.png" alt="$\pm$"> standard deviation. Prediction error is smaller near the data points and larger at poorly sample regions. The prediction error is an estimate based on:</p><div><ul><li>Measurement Noise</li><li>Mutation information content of the data</li><li>Information content of the data w.r.t. to the point of interest</li></ul></div><pre class="codeinput"><span class="keyword">for</span> iInputVariable = 1:nInputVar
+
+    <span class="comment">% Adjust Indices and values</span>
+    remainingIndices = setdiff(1:nInputVar,iInputVariable);
+    remainingValues = ones(1,2)*2;
+    KrigingObj.calcInterpolation_2D(indexKrigingObj,iInputVariable,remainingIndices,remainingValues)
+    KrigingObj.plotInterpolation_2D(1);
+
+    <span class="comment">% Set format appropriate for documentation</span>
+    set(gcf,<span class="string">'Position'</span>, [100, 100, 330, 330/4*3]);
+    set(gca,<span class="string">'FontSize'</span>,10)
+<span class="keyword">end</span>
+</pre><img vspace="5" hspace="5" src="tutorialVisualizingData_04.png" alt=""> <img vspace="5" hspace="5" src="tutorialVisualizingData_05.png" alt=""> <img vspace="5" hspace="5" src="tutorialVisualizingData_06.png" alt=""> <h2>3D Interpolation plots<a name="6"></a></h2><p>The 3D interpolation visualizes the estimated functional relationship the between output variable and two input variables. The remaining input variables are fixed to a user defined value.</p><p>NOTE: Settings such as "ShowBounds" and "ShowData" are global and are used also for several other visualization features</p><pre class="codeinput">combinations = [1,2,3;1,3,2;2,3,1]; <span class="comment">% Pair-wise combinations of input variables</span>
+KrigingObj.setShowBounds(true) <span class="comment">% If false, only prediction is shown without the confidence tube</span>
+KrigingObj.setShowData(true) <span class="comment">% Show provided data points</span>
+<span class="keyword">for</span> iComb = 1:nInputVar
+    KrigingObj.calcInterpolation_3D(indexKrigingObj,<span class="keyword">...</span>
+               combinations(iComb,1:2),combinations(iComb,3),2)
+    KrigingObj.plotInterpolation_3D(indexKrigingObj)
+    campos([-40.0176  -52.6198   92.8089]) <span class="comment">% Set the camera position</span>
+    grid <span class="string">on</span>
+
+    <span class="comment">% Set format appropriate for documentation</span>
+    set(gcf,<span class="string">'Position'</span>, [100, 100, 330, 330/4*3]);
+    set(gca,<span class="string">'FontSize'</span>,10)
+<span class="keyword">end</span>
+KrigingObj.setShowBounds(true)
+</pre><img vspace="5" hspace="5" src="tutorialVisualizingData_07.png" alt=""> <img vspace="5" hspace="5" src="tutorialVisualizingData_08.png" alt=""> <img vspace="5" hspace="5" src="tutorialVisualizingData_09.png" alt=""> <h2>Screening Plots<a name="8"></a></h2><p>Screening plots show interpolation for all pair-wise combinations of input variables. The remaining input variables are set fix to a predefined reference point.</p><pre class="codeinput">KrigingObj.setReferencePoint([2,2,2]); <span class="comment">% Values for remaining input variables</span>
+KrigingObj.calcScreeningAnalysis(indexKrigingObj)
+KrigingObj.plotScreeningAnalysisKrigingInterpolation(indexKrigingObj)
+
+<span class="comment">% Set format appropriate for documentation</span>
+set(gcf,<span class="string">'Position'</span>, [100, 100, 700, 700/4*3]);
+set(gca,<span class="string">'FontSize'</span>,10)
+</pre><img vspace="5" hspace="5" src="tutorialVisualizingData_10.png" alt=""> <h2>nD Interpolation plots<a name="9"></a></h2><p>The idea of "n-D" is to use several contour plot showing the dependency of the output variable on two input variables while increasing a third one. This can be repeated for all combination of input variables leading to an overall understanding.</p><pre class="codeinput">KrigingObj.setnPlots(5); <span class="comment">% Number of columns in each row</span>
+KrigingObj.calcInterpolation_nD(indexKrigingObj,[1,2,3;1,3,2;2,3,1],[],[]) <span class="comment">% no remaining input variables</span>
+KrigingObj.plotInterpolation_nD(indexKrigingObj)
+
+<span class="comment">% Set format appropriate for documentation</span>
+set(gcf,<span class="string">'Position'</span>, [100, 100, 700, 700/4*3]);
+set(gca,<span class="string">'FontSize'</span>,10)
+</pre><img vspace="5" hspace="5" src="tutorialVisualizingData_11.png" alt=""> <h2>MakeMovie<a name="10"></a></h2><p>The movie analysis allows a dynamic visualization of three factor interaction. In the end, an avi file is produced with a user defined frame rate. In total, <i>n</i> 3D-interpolation plots are generared for the movie. The camera position has to be adjusted at the beginning and is hold fixed for the remaining recording.</p><p>Under Windows, the resulting movie can be opened <a href="matlab:winopen('movieAnalysis.avi')">here</a></p><pre class="codeinput">fileName = <span class="string">'movieAnalysis'</span>;
+KrigingObj.setFrameRate(2)
+KrigingObj.setnStepsBetweenBounds(10)
+KrigingObj.setReferencePoint([2,2,2]); <span class="comment">% Values for remaining input variables</span>
+KrigingObj.setShowBounds(false); <span class="comment">% Show only model prediction</span>
+KrigingObj.setPlottingRange([-8,18])
+KrigingObj.make3dMovieAnalysis(indexKrigingObj,3,3,fileName)
+</pre><pre class="codeoutput">Step 1 of 10
+Please Rotate Figure and continue with an arbitrary key
+Step 2 of 10
+Step 3 of 10
+Step 4 of 10
+Step 5 of 10
+Step 6 of 10
+Step 7 of 10
+Step 8 of 10
+Step 9 of 10
+Step 10 of 10
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Tutorial: How to visualize data
+%
+%
+close all
+
+%% Test Function
+% The test function as follows:
+%
+% $$f_{\rm{Test}} = \frac{10x_{1}}{5 + x_{1}}\sin\left( x_{2} \right) +
+% x_{3}$$
+%
+% That is, the output is related to the first input variable by a Michaelis
+% Menten curve(steep increase for small values followed by a plateau). The
+% second input variable leads to oscillation and the third input variable
+% leads to an linear monotonically increase. The effect of the
+% first and second input are coupled with each other.
+%
+% For a better visualization, pair-wise combination of input variables are
+% plotted against the output. Remaining input variable was hold constant at
+% the value of 2.
+visualizeTestFunction();
+
+%% Initialization
+% Step 1: Create a new Kriging analysis object. For more details see
+% documentation of <matlab:open(fullfile('tutorialCreatingObject.html')) tutorialCreatingObject>
+[KrigingObj]=tutorialCreatingObject(false);
+
+% Remember the Currently used object
+indexKrigingObj = 1;
+nInputVar = KrigingObj.KrigingObjects{indexKrigingObj}.getnInputVar;
+
+%% 2D - Interpolation Plots
+% The 2D interpolation depicts the estimated functional relationship between
+% the output variable and one input variable. The remaining input variables
+% are fixed to a user defined value. Red dots indicate the data points
+%
+% Confidence bounds are by default to prediction value $\pm$ standard
+% deviation. Prediction error is smaller near the data points and larger
+% at poorly sample regions. The prediction error is an estimate based on:
+%%%
+% * Measurement Noise 
+% * Mutation information content of the data
+% * Information content of the data w.r.t. to the point of interest
+
+for iInputVariable = 1:nInputVar
+    
+    % Adjust Indices and values
+    remainingIndices = setdiff(1:nInputVar,iInputVariable);
+    remainingValues = ones(1,2)*2;
+    KrigingObj.calcInterpolation_2D(indexKrigingObj,iInputVariable,remainingIndices,remainingValues)
+    KrigingObj.plotInterpolation_2D(1);
+    
+    % Set format appropriate for documentation
+    set(gcf,'Position', [100, 100, 330, 330/4*3]);
+    set(gca,'FontSize',10)
+end
+     
+%% 3D Interpolation plots
+% The 3D interpolation visualizes the estimated functional relationship the
+% between output variable and two input variables. The remaining input
+% variables are fixed to a user defined value. 
+%%%
+% NOTE: Settings such as "ShowBounds" and "ShowData" are global and are used also
+% for several other visualization features
+combinations = [1,2,3;1,3,2;2,3,1]; % Pair-wise combinations of input variables
+KrigingObj.setShowBounds(true) % If false, only prediction is shown without the confidence tube 
+KrigingObj.setShowData(true) % Show provided data points
+for iComb = 1:nInputVar
+    KrigingObj.calcInterpolation_3D(indexKrigingObj,...
+               combinations(iComb,1:2),combinations(iComb,3),2)
+    KrigingObj.plotInterpolation_3D(indexKrigingObj)
+    campos([-40.0176  -52.6198   92.8089]) % Set the camera position
+    grid on
+
+    % Set format appropriate for documentation
+    set(gcf,'Position', [100, 100, 330, 330/4*3]);
+    set(gca,'FontSize',10)
+end
+KrigingObj.setShowBounds(true)
+
+
+%% Screening Plots
+% Screening plots show interpolation for all pair-wise combinations of
+% input variables. The remaining input variables are set fix to a
+% predefined reference point.
+
+KrigingObj.setReferencePoint([2,2,2]); % Values for remaining input variables
+KrigingObj.calcScreeningAnalysis(indexKrigingObj)
+KrigingObj.plotScreeningAnalysisKrigingInterpolation(indexKrigingObj)
+
+% Set format appropriate for documentation
+set(gcf,'Position', [100, 100, 700, 700/4*3]);
+set(gca,'FontSize',10)
+
+%% nD Interpolation plots
+% The idea of "n-D" is to use several contour plot showing the dependency
+% of the output variable on two input variables while increasing a third
+% one. This can be repeated for all combination of input variables leading
+% to an overall understanding.
+
+KrigingObj.setnPlots(5); % Number of columns in each row
+KrigingObj.calcInterpolation_nD(indexKrigingObj,[1,2,3;1,3,2;2,3,1],[],[]) % no remaining input variables
+KrigingObj.plotInterpolation_nD(indexKrigingObj)
+
+% Set format appropriate for documentation
+set(gcf,'Position', [100, 100, 700, 700/4*3]);
+set(gca,'FontSize',10)
+
+%% MakeMovie
+% The movie analysis allows a dynamic visualization of three factor
+% interaction. In the end, an avi file is produced with a user defined
+% frame rate. In total, _n_ 3D-interpolation plots are generared for the
+% movie. The camera position has to be adjusted at the beginning and is
+% hold fixed for the remaining recording.
+%
+% Under Windows, the resulting movie can be opened
+% <matlab:winopen('movieAnalysis.avi') here>
+
+fileName = 'movieAnalysis';
+KrigingObj.setFrameRate(2)
+KrigingObj.setnStepsBetweenBounds(10)
+KrigingObj.setReferencePoint([2,2,2]); % Values for remaining input variables
+KrigingObj.setShowBounds(false); % Show only model prediction
+KrigingObj.setPlottingRange([-8,18])
+KrigingObj.make3dMovieAnalysis(indexKrigingObj,3,3,fileName)
+##### SOURCE END #####
+--></body></html>

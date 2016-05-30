@@ -5,6 +5,7 @@
 addpath(genpath(strcat(cd,'/dependencies')));
 addpath(genpath(strcat(cd,'/GUI')));
 addpath(genpath(strcat(cd,'/check')));
+addpath(genpath(strcat(cd,'/Tutorial')));
 addpath(cd);
 
 % =============================================================================
