@@ -12,6 +12,8 @@ function [] = plotScreeningAnalysis(obj,varargin)
 % - Objective ... decide if the Kriging estimation ('KrigingInterpolation'), the expected
 %                 improvement ('ExpectedImprovement') or optimal regions
 %                 ('Optimum') shall be plotted
+% - testValue ... if Objective = 'Optimum', testValue can be used as
+% described in plotOptimum23D()
 %
 % 
 % Output: -

@@ -18,7 +18,8 @@ function [] = plotParetoFront(obj,varargin)
 % You can set: 
 % - ShowBounds: Decide if Confidence bounce should be shown
 % - ShowData: Decide if the data used for the kriging model shall be
-%             plotted
+%             plotted. For more information see documentation of
+%             "plotParetoFrontData"
 % - WidthConfidenceInterval: Decide how broad the condicence tube should
 %                            be. This is related to normal
 %                            distribution(mean value +-
@@ -77,6 +78,11 @@ function [] = plotParetoFront(obj,varargin)
                 objectOpt = findobj(gca,'DisplayName','Optimal Sample Points');
                 objectNonOptExtra = findobj(gca,'DisplayName','Non-optimal Extra Points');
                 objectOptExtra = findobj(gca,'DisplayName','OptimalExtra Points');
+            else
+                objectOpt = [];
+                objectNonOpt = [];
+                objectOptExtra = [];
+                objectNonOptExtra = [];
             end
         case 3
             % Check if "gridFit" is available
@@ -125,6 +131,11 @@ function [] = plotParetoFront(obj,varargin)
                 objectOpt = findobj(gca,'DisplayName','Optimal Sample Points');
                 objectNonOptExtra = findobj(gca,'DisplayName','Non-optimal Extra Points');
                 objectOptExtra = findobj(gca,'DisplayName','OptimalExtra Points');
+            else
+                objectOpt = [];
+                objectNonOpt = [];
+                objectOptExtra = [];
+                objectNonOptExtra = [];
             end
         otherwise
             error('plotParetoFront is not implemented for more than 3 objectives')

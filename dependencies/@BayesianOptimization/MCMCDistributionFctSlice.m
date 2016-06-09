@@ -30,6 +30,8 @@ if ~isempty(obj.InequalityConstraintHandle)
     boolIsValid = boolIsValid&~bsxfun(@gt,estimationPoints,obj.UBInputVarInterpolation{obj.ObjectiveIndicesUsedByCalcNewSamplesViaMCMC(1)});
 else
     boolIsValid = true(nParameterSets,1);
+    boolIsValid = boolIsValid&~any(bsxfun(@lt,estimationPoints,obj.LBInputVarInterpolation{obj.ObjectiveIndicesUsedByCalcNewSamplesViaMCMC(1)}));
+    boolIsValid = boolIsValid&~any(bsxfun(@gt,estimationPoints,obj.UBInputVarInterpolation{obj.ObjectiveIndicesUsedByCalcNewSamplesViaMCMC(1)}));
 end
 probabilityDensity = log(0)*ones(nParameterSets,1);
 
@@ -43,6 +45,8 @@ if any(boolIsValid)
                                                                           obj.ObjectiveIndicesUsedByCalcNewSamplesViaMCMC,...
                                                                           estimationPoints(boolIsValid,:)));
     end
+% else
+%     keyboard
 end
     
 end
