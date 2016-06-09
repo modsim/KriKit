@@ -18,7 +18,7 @@ KriKit was implemented and tested using Matlab(2015b). KriKit is freely distribu
 - Visualization features can be used via a graphical user interface.
 
 ## Get KriKit
-Link to release version is coming soon.
+Download the [latest release](https://github.com/modsim/KriKit/releases)
 
 ## Documentation
 Documentation is in progress.
