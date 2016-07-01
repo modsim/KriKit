@@ -11,6 +11,7 @@ function labelPlots_23D(obj,varargin)
 KrigingObjectIndex = varargin{1};
 dimensionInterpolation = varargin{2};
 plotExpectedImprovement = varargin{3};
+plotContour = varargin{4};
    
 %% Actual Labeling
 switch dimensionInterpolation
@@ -35,11 +36,20 @@ switch dimensionInterpolation
             xlabel(obj.InputVarNames{KrigingObjectIndex(1)}(obj.KrigingPrediction_Interpolation3D{KrigingObjectIndex,3}(1)),'FontSize',obj.FontSize);
             ylabel(obj.InputVarNames{KrigingObjectIndex(1)}(obj.KrigingPrediction_Interpolation3D{KrigingObjectIndex,3}(2)),'FontSize',obj.FontSize);
         end
+        
         if plotExpectedImprovement
-            zlabel('Expected Improvement','FontSize',obj.FontSize);
+            zString = 'Expected Improvement';
         else
-            zlabel(obj.KrigingObjectNames{KrigingObjectIndex},'FontSize',obj.FontSize);
+            zString = obj.KrigingObjectNames{KrigingObjectIndex};
         end
+        if plotContour
+            hColorBar = colorbar;
+            ylabel(hColorBar,zString,'FontSize',obj.FontSize);
+        else
+            zlabel(zString,'FontSize',obj.FontSize);
+        end
+        
+        
     otherwise
         error('Plotting function is only allowed for 2D and 3D interpolation')
 end

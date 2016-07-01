@@ -2,33 +2,31 @@ function [] = doFullFactorialAnalysis(obj,KrigingObjectIndex)
 % [] = doFullFactorialAnalysis(obj,KrigingObjectIndex)
 % This function create a full factorial + center point design inside of the Kriging
 % interpolation and applies afterwards an ANOVA. 
-% KrigingObjectIndex ... Index of the Kriging object on which the ANOVA
-% should be applied.
-% You can get:
-% ANOVACoefficients ... contains the polynomial coefficient calculated during the
-%                       ANOVA-Analysis
-% ANOVACovMatrix ... Contain the covariance of the polynomial coefficient calculated
-%                    during the ANOVA-Analysis
-% ANOVAStdOfCoefficients ... contains the standard deviation of the polynomial coefficient
-%                            calculated during the ANOVA-Analysis
-% ANOVATvalue ... contain the t-value for t-test in order to decide which of the
-%                 polynomial coefficient differ significantly from zero
-% ANOVAPvalue ... Contain the p-value for t-test in order to decide which of the
-%                 polynomial coefficient differ significantly from zero. Ususally
-%                 values lower than 0.05 represent significant coefficients
+% 
+% Input:
+% - KrigingObjectIndex ... index of Kriging object of interest
+% 
+% Output: -
+% 
 % You can set:
-% ShowDetails ... a table is display which contains the variable in the of
-% "You can get"
-% Be aware that all get variable are overwritten ecerytime you run an
-% ANOVA!
+% - ShowDetails ... a table is display which contains the variable in the of
+% - LB/UBInputVarInterpolation ... determines the range of input variable
+%   for the DoE Analysis
+% 
+% You can get: -
+%
+% For more information about sets and get see documentation of
+% "doANOVAandPrediction".
+% 
+% Copyright 2014-2016: Lars Freier, Eric von Lieres
+% See the license note at the end of the file.
 %% Initialization
 nInputVar = obj.KrigingObjects{KrigingObjectIndex}.getnInputVar;
 inputData = obj.KrigingObjects{KrigingObjectIndex}.getInputData;
 nData = 2^nInputVar;
 normInputMatrix = zeros(nData,nInputVar);
 inputMatrix = zeros(nData,nInputVar);
-% Copyright 2014-2016: Lars Freier, Eric von Lieres
-% See the license note at the end of the file.
+
 
 %% Experimental design
 

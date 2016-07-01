@@ -79,6 +79,34 @@ for iComb = 1:nInputVar
 end
 KrigingObj.setShowBounds(true)
 
+%% Contour plots
+% Contour plots represent the top view of the 3D Interpolation. It
+% projectes the 3D information to 2D and is often easier to interprete.
+% Before a contour plot can be create the 3D information have to be
+% calculated in the same fashion as for the 3D interpolation plots.
+%%%
+% NOTE: Settings such as "ShowData" are global and are used also
+% for several other visualization features
+combinations = [1,2,3;1,3,2;2,3,1]; % Pair-wise combinations of input variables
+KrigingObj.setShowData(true) % Show provided data points
+
+% Set the inputs for "plotInterpolation_23D"
+dimension = 3;
+showExpectedImprovement = false;
+showContourplot = true;
+
+for iComb = 1:nInputVar
+    KrigingObj.calcInterpolation_3D(indexKrigingObj,...
+               combinations(iComb,1:2),combinations(iComb,3),2)
+    KrigingObj.plotInterpolation_23D(indexKrigingObj,dimension,...
+                                   showExpectedImprovement,showContourplot)
+    grid on
+
+    % Set format appropriate for documentation
+    set(gcf,'Position', [100, 100, 330, 330/4*3]);
+    set(gca,'FontSize',10)
+end
+
 
 %% Screening Plots
 % Screening plots show interpolation for all pair-wise combinations of

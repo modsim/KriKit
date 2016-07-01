@@ -1,4 +1,31 @@
 function [] = doANOVAandPrediction(obj,KrigingObjectIndex,X,inputMatrix,df)
+% [] = doANOVAandPrediction(KrigingObjectIndex,ExpDesign,inputMatrix,df)
+% Input: 
+% - KrigingObjectIndex ... index of Kriging object of interest
+% - ExpDesign .. normalized experimental design [nPoints X nDesignVariables]
+% - inputMatrix ... actual input values [nPoints X nInputVar]
+% - df .. degree of freedom (nPoints - nDesignVariables)
+%
+% Design vairables represent a combination of input variables such as
+% [x1],[x1*x2],[x2*x2] ... 
+%
+% Output: -
+% 
+% You can set:
+% 
+% You can get:
+% ANOVACoefficients ... contains the polynomial coefficient calculated during the
+%                       ANOVA-Analysis
+% ANOVACovMatrix ... Contain the covariance of the polynomial coefficient calculated
+%                    during the ANOVA-Analysis
+% ANOVAStdOfCoefficients ... contains the standard deviation of the polynomial coefficient
+%                            calculated during the ANOVA-Analysis
+% ANOVATvalue ... contain the t-value for t-test in order to decide which of the
+%                 polynomial coefficient differ significantly from zero
+% ANOVAPvalue ... Contain the p-value for t-test in order to decide which of the
+%                 polynomial coefficient differ significantly from zero. Ususally
+%                 values lower than 0.05 represent significant coefficients
+% 
 % This Function does the main work of the ANOVA
 % Copyright 2014-2016: Lars Freier, Eric von Lieres
 % See the license note at the end of the file.

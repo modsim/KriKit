@@ -83,6 +83,9 @@ function [OutputTotal] = prediction(obj,input)
         TotalInput = input;
         TotalNonNormInput =nonNormInput;
         OutputTotal = zeros(size(TotalInput,1),2);
+%         obj.Weights = zeros(obj.getnExperiments+obj.getnBasisFct,size(TotalInput,1));
+%         CovVecTot = zeros(obj.getnExperiments+obj.getnBasisFct,size(TotalInput,1));
+        
         if obj.ShowWaitingBar==1;
             str =  horzcat('Please wait prediction runs ... already done: ',num2str(0),'%');
             hWaitingBar = waitbar(0,str);
@@ -130,6 +133,9 @@ function [OutputTotal] = prediction(obj,input)
         nInput = size(input,1);
         doPredictionUniversalKriging;
         OutputTotal(indexEnd+1:end,:) = Output;
+%         obj.Weights(:,indexEnd+1:end) = krigingWeights;
+%         CovVecTot(:,indexEnd+1:end) = obj.CovargramVectors;
+        
         if obj.ShowWaitingBar==1;
             close(hWaitingBar)
         end
@@ -150,8 +156,13 @@ function [OutputTotal] = prediction(obj,input)
         
         % Save the krigingWeights
         obj.Weights = krigingWeights;
+%         CovVecTot = obj.CovargramVectors;
         OutputTotal = Output;
     end
+    
+    % Save Covariogram vector (Needed for full facatorial and central
+    % composite design) 
+%     obj.CovargramVectors = CovVecTot;
     
     if obj.NormOutput
         % Normalization a = b*(max(out)-min(out))/(1-0) + min(out)

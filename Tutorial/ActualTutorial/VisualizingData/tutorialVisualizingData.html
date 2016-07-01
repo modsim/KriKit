@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>tutorialVisualizingData</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-05-18"><meta name="DC.source" content="tutorialVisualizingData.m"><style type="text/css">
+      --><title>tutorialVisualizingData</title><meta name="generator" content="MATLAB 9.0"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-07-01"><meta name="DC.source" content="tutorialVisualizingData.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -66,7 +66,7 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 
 
-  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Tutorial: How to visualize data</a></li><li><a href="#2">Test Function</a></li><li><a href="#3">Initialization</a></li><li><a href="#4">2D - Interpolation Plots</a></li><li><a href="#6">3D Interpolation plots</a></li><li><a href="#8">Screening Plots</a></li><li><a href="#9">nD Interpolation plots</a></li><li><a href="#10">MakeMovie</a></li></ul></div><h2>Tutorial: How to visualize data<a name="1"></a></h2><pre class="codeinput">close <span class="string">all</span>
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Tutorial: How to visualize data</a></li><li><a href="#2">Test Function</a></li><li><a href="#3">Initialization</a></li><li><a href="#4">2D - Interpolation Plots</a></li><li><a href="#6">3D Interpolation plots</a></li><li><a href="#8">Contour plots</a></li><li><a href="#10">Screening Plots</a></li><li><a href="#11">nD Interpolation plots</a></li><li><a href="#12">MakeMovie</a></li></ul></div><h2>Tutorial: How to visualize data<a name="1"></a></h2><pre class="codeinput">close <span class="string">all</span>
 </pre><h2>Test Function<a name="2"></a></h2><p>The test function as follows:</p><p><img src="tutorialVisualizingData_eq06559173809755883972.png" alt="$$f_{\rm{Test}} = \frac{10x_{1}}{5 + x_{1}}\sin\left( x_{2} \right) +&#xA;x_{3}$$"></p><p>That is, the output is related to the first input variable by a Michaelis Menten curve(steep increase for small values followed by a plateau). The second input variable leads to oscillation and the third input variable leads to an linear monotonically increase. The effect of the first and second input are coupled with each other.</p><p>For a better visualization, pair-wise combination of input variables are plotted against the output. Remaining input variable was hold constant at the value of 2.</p><pre class="codeinput">visualizeTestFunction();
 </pre><img vspace="5" hspace="5" src="tutorialVisualizingData_01.png" alt=""> <img vspace="5" hspace="5" src="tutorialVisualizingData_02.png" alt=""> <img vspace="5" hspace="5" src="tutorialVisualizingData_03.png" alt=""> <h2>Initialization<a name="3"></a></h2><p>Step 1: Create a new Kriging analysis object. For more details see documentation of <a href="matlab:open(fullfile('tutorialCreatingObject.html'))">tutorialCreatingObject</a></p><pre class="codeinput">[KrigingObj]=tutorialCreatingObject(false);
 
@@ -100,21 +100,40 @@ KrigingObj.setShowData(true) <span class="comment">% Show provided data points</
     set(gca,<span class="string">'FontSize'</span>,10)
 <span class="keyword">end</span>
 KrigingObj.setShowBounds(true)
-</pre><img vspace="5" hspace="5" src="tutorialVisualizingData_07.png" alt=""> <img vspace="5" hspace="5" src="tutorialVisualizingData_08.png" alt=""> <img vspace="5" hspace="5" src="tutorialVisualizingData_09.png" alt=""> <h2>Screening Plots<a name="8"></a></h2><p>Screening plots show interpolation for all pair-wise combinations of input variables. The remaining input variables are set fix to a predefined reference point.</p><pre class="codeinput">KrigingObj.setReferencePoint([2,2,2]); <span class="comment">% Values for remaining input variables</span>
+</pre><img vspace="5" hspace="5" src="tutorialVisualizingData_07.png" alt=""> <img vspace="5" hspace="5" src="tutorialVisualizingData_08.png" alt=""> <img vspace="5" hspace="5" src="tutorialVisualizingData_09.png" alt=""> <h2>Contour plots<a name="8"></a></h2><p>Contour plots represent the top view of the 3D Interpolation. It projectes the 3D information to 2D and is often easier to interprete. Before a contour plot can be create the 3D information have to be calculated in the same fashion as for the 3D interpolation plots.</p><p>NOTE: Settings such as "ShowData" are global and are used also for several other visualization features</p><pre class="codeinput">combinations = [1,2,3;1,3,2;2,3,1]; <span class="comment">% Pair-wise combinations of input variables</span>
+KrigingObj.setShowData(true) <span class="comment">% Show provided data points</span>
+
+<span class="comment">% Set the inputs for "plotInterpolation_23D"</span>
+dimension = 3;
+showExpectedImprovement = false;
+showContourplot = true;
+
+<span class="keyword">for</span> iComb = 1:nInputVar
+    KrigingObj.calcInterpolation_3D(indexKrigingObj,<span class="keyword">...</span>
+               combinations(iComb,1:2),combinations(iComb,3),2)
+    KrigingObj.plotInterpolation_23D(indexKrigingObj,dimension,<span class="keyword">...</span>
+                                   showExpectedImprovement,showContourplot)
+    grid <span class="string">on</span>
+
+    <span class="comment">% Set format appropriate for documentation</span>
+    set(gcf,<span class="string">'Position'</span>, [100, 100, 330, 330/4*3]);
+    set(gca,<span class="string">'FontSize'</span>,10)
+<span class="keyword">end</span>
+</pre><img vspace="5" hspace="5" src="tutorialVisualizingData_10.png" alt=""> <img vspace="5" hspace="5" src="tutorialVisualizingData_11.png" alt=""> <img vspace="5" hspace="5" src="tutorialVisualizingData_12.png" alt=""> <h2>Screening Plots<a name="10"></a></h2><p>Screening plots show interpolation for all pair-wise combinations of input variables. The remaining input variables are set fix to a predefined reference point.</p><pre class="codeinput">KrigingObj.setReferencePoint([2,2,2]); <span class="comment">% Values for remaining input variables</span>
 KrigingObj.calcScreeningAnalysis(indexKrigingObj)
 KrigingObj.plotScreeningAnalysisKrigingInterpolation(indexKrigingObj)
 
 <span class="comment">% Set format appropriate for documentation</span>
 set(gcf,<span class="string">'Position'</span>, [100, 100, 700, 700/4*3]);
 set(gca,<span class="string">'FontSize'</span>,10)
-</pre><img vspace="5" hspace="5" src="tutorialVisualizingData_10.png" alt=""> <h2>nD Interpolation plots<a name="9"></a></h2><p>The idea of "n-D" is to use several contour plot showing the dependency of the output variable on two input variables while increasing a third one. This can be repeated for all combination of input variables leading to an overall understanding.</p><pre class="codeinput">KrigingObj.setnPlots(5); <span class="comment">% Number of columns in each row</span>
+</pre><img vspace="5" hspace="5" src="tutorialVisualizingData_13.png" alt=""> <h2>nD Interpolation plots<a name="11"></a></h2><p>The idea of "n-D" is to use several contour plot showing the dependency of the output variable on two input variables while increasing a third one. This can be repeated for all combination of input variables leading to an overall understanding.</p><pre class="codeinput">KrigingObj.setnPlots(5); <span class="comment">% Number of columns in each row</span>
 KrigingObj.calcInterpolation_nD(indexKrigingObj,[1,2,3;1,3,2;2,3,1],[],[]) <span class="comment">% no remaining input variables</span>
 KrigingObj.plotInterpolation_nD(indexKrigingObj)
 
 <span class="comment">% Set format appropriate for documentation</span>
 set(gcf,<span class="string">'Position'</span>, [100, 100, 700, 700/4*3]);
 set(gca,<span class="string">'FontSize'</span>,10)
-</pre><img vspace="5" hspace="5" src="tutorialVisualizingData_11.png" alt=""> <h2>MakeMovie<a name="10"></a></h2><p>The movie analysis allows a dynamic visualization of three factor interaction. In the end, an avi file is produced with a user defined frame rate. In total, <i>n</i> 3D-interpolation plots are generared for the movie. The camera position has to be adjusted at the beginning and is hold fixed for the remaining recording.</p><p>Under Windows, the resulting movie can be opened <a href="matlab:winopen('movieAnalysis.avi')">here</a></p><pre class="codeinput">fileName = <span class="string">'movieAnalysis'</span>;
+</pre><img vspace="5" hspace="5" src="tutorialVisualizingData_14.png" alt=""> <h2>MakeMovie<a name="12"></a></h2><p>The movie analysis allows a dynamic visualization of three factor interaction. In the end, an avi file is produced with a user defined frame rate. In total, <i>n</i> 3D-interpolation plots are generared for the movie. The camera position has to be adjusted at the beginning and is hold fixed for the remaining recording.</p><p>Under Windows, the resulting movie can be opened <a href="matlab:winopen('movieAnalysis.avi')">here</a></p><pre class="codeinput">fileName = <span class="string">'movieAnalysis'</span>;
 KrigingObj.setFrameRate(2)
 KrigingObj.setnStepsBetweenBounds(10)
 KrigingObj.setReferencePoint([2,2,2]); <span class="comment">% Values for remaining input variables</span>
@@ -132,7 +151,7 @@ Step 7 of 10
 Step 8 of 10
 Step 9 of 10
 Step 10 of 10
-</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015b</a><br></p></div><!--
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Tutorial: How to visualize data
 %
@@ -158,7 +177,8 @@ visualizeTestFunction();
 
 %% Initialization
 % Step 1: Create a new Kriging analysis object. For more details see
-% documentation of <matlab:open(fullfile('tutorialCreatingObject.html')) tutorialCreatingObject>
+% documentation of <matlab:open(fullfile('tutorialCreatingObject.html'))
+% tutorialCreatingObject>
 [KrigingObj]=tutorialCreatingObject(false);
 
 % Remember the Currently used object
@@ -213,6 +233,34 @@ for iComb = 1:nInputVar
     set(gca,'FontSize',10)
 end
 KrigingObj.setShowBounds(true)
+
+%% Contour plots
+% Contour plots represent the top view of the 3D Interpolation. It
+% projectes the 3D information to 2D and is often easier to interprete.
+% Before a contour plot can be create the 3D information have to be
+% calculated in the same fashion as for the 3D interpolation plots.
+%%%
+% NOTE: Settings such as "ShowData" are global and are used also
+% for several other visualization features
+combinations = [1,2,3;1,3,2;2,3,1]; % Pair-wise combinations of input variables
+KrigingObj.setShowData(true) % Show provided data points
+
+% Set the inputs for "plotInterpolation_23D"
+dimension = 3;
+showExpectedImprovement = false;
+showContourplot = true;
+
+for iComb = 1:nInputVar
+    KrigingObj.calcInterpolation_3D(indexKrigingObj,...
+               combinations(iComb,1:2),combinations(iComb,3),2)
+    KrigingObj.plotInterpolation_23D(indexKrigingObj,dimension,...
+                                   showExpectedImprovement,showContourplot)
+    grid on
+
+    % Set format appropriate for documentation
+    set(gcf,'Position', [100, 100, 330, 330/4*3]);
+    set(gca,'FontSize',10)
+end
 
 
 %% Screening Plots

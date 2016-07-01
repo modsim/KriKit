@@ -2,26 +2,22 @@ function [] = doCompositeDesignAnalysis(obj,KrigingObjectIndex)
 % [] = doCompositeDesignAnalysis(obj,KrigingObjectIndex)
 % This function create a central composite design inside of the Kriging
 % interpolation and applies afterwards an ANOVA. 
-% KrigingObjectIndex ... Index of the Kriging object on which the ANOVA
-% should be applied.
-% You can get:
-% ANOVACoefficients ... contains the polynomial coefficient calculated during the
-%                       ANOVA-Analysis
-% ANOVACovMatrix ... Contain the covariance of the polynomial coefficient calculated
-%                    during the ANOVA-Analysis
-% ANOVAStdOfCoefficients ... contains the standard deviation of the polynomial coefficient
-%                            calculated during the ANOVA-Analysis
-% ANOVATvalue ... contain the t-value for t-test in order to decide which of the
-%                 polynomial coefficient differ significantly from zero
-% ANOVAPvalue ... Contain the p-value for t-test in order to decide which of the
-%                 polynomial coefficient differ significantly from zero. Ususally
-%                 values lower than 0.05 represent significant coefficients
+% 
+% Input:
+% - KrigingObjectIndex ... index of Kriging object of interest
+% 
+% Output: -
+% 
 % You can set:
 % ShowDetails ... a table is display which contains the variable in the of
-% "You can get"
-% Be aware that all get variable are overwritten everytime you run an
-% ANOVA!
+% - LB/UBInputVarInterpolation ... determines the range of input variable
+%   for the DoE Analysis
+% 
+% You can get: -
 %
+% For more information about sets and get see documentation of
+% "doANOVAandPrediction".
+% 
 % Copyright 2014-2016: Lars Freier, Eric von Lieres
 % See the license note at the end of the file.
 

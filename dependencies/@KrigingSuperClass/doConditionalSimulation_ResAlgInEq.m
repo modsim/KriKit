@@ -98,7 +98,8 @@ if obj.NormInput==1
     end
 else
     nonNormSampleLocations = sampleLocations;
-end
+end 
+
 
 % Backup in order to return to old state after conditional simulation
 maxSizeOfPredictionsBackup = obj.getMaxSizeOfPredictions;
@@ -121,7 +122,7 @@ try
 
     % Actual Prediction
     outputMatrix = obj.prediction(nonNormSampleLocations(:,1:obj.getnInputVar));
-
+    
     % Save results
     krigingWeights = obj.getWeights;
     krigingWeights = krigingWeights(1:obj.getnExperiments,:);
@@ -173,7 +174,8 @@ try
         if ~allRealizationPointsAreTheSame
             % Actual Prediction
             outputMatrix = obj.prediction(nonNormSampleLocations(:,columnSamplePoints));
-
+            
+            
             % Save results
             krigingWeights = obj.getWeights;
             krigingWeights = krigingWeights(1:obj.getnExperiments,:);
@@ -190,7 +192,8 @@ try
             randomResidual(:) = unconditionedReal(iRealization,obj.getnExperiments+1:end)'- krigingWeights(:,obj.getnExperiments+1:end)'*unconditionedReal(iRealization,1:obj.getnExperiments)';
             
             % Final calculation of conditional simulation
-            realizationCurve(:,iRealization) = meanEstimation(obj.getnExperiments+1:end) + randomResidual;
+            realizationCurve(:,iRealization) = meanEstimation(obj.getnExperiments+1:end) + randomResidual + randn()*obj.sigmaError;
+
 
             % Update Process bar if wanted
             if obj.getShowWaitingBar
@@ -250,6 +253,7 @@ end
 % -------------------------------------------------------------------------
 function [covMatrix] = createCovMatrix(sampleLocations)
     nPoints = nSamplePoints+obj.nExperiments;
+    
     [a,b] = ndgrid(1:nPoints,1:nPoints);
     combinationMatrix = [b(:),a(:)];
     if(obj.CovariogramUsesEuclideanDistance)

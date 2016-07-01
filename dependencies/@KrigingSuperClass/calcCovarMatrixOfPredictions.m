@@ -5,6 +5,8 @@ function [] = calcCovarMatrixOfPredictions(obj,inputData)
 % Copyright 2014-2016: Lars Freier, Eric von Lieres
 % See the license note at the end of the file.
 
+
+
 % Calculate all Combinations
 nDataPoints = size(inputData,1);
 
@@ -19,15 +21,13 @@ end
 nComb = [nComb1(:),nComb2(:)];
 nOriginalDataPoints = obj.getnExperiments;
 CovMatrixofExperiments = obj.getCovariogramMatrix;
-% Calculate Cov(x_i,x_i)=C(0)
-% switch obj.CovariogramModelChoice
-%         case 1
-%             covariance_zero  = ones(nDataPoints,nDataPoints).*(obj.sigma);
-%         otherwise
-%             covariance_zero  = ones(nDataPoints,nDataPoints).*(obj.sigmaError+obj.sigma);
-% end
-% covariance_zero  = ones(nDataPoints,nDataPoints).*(obj.sigma);
-covariance_zero = ones(nDataPoints,nDataPoints)*obj.CovarModel(zeros(1,size(obj.DistInput,2)),1);
+
+% Check if all weights and covariance values are saved 
+if size(obj.Weights,2)<max(nComb(:,1))||size(obj.CovargramVectors,2)<max(nComb(:,2))
+    error('Not all weights are saved. Most likely the value of "MaxSizeOfPredictions" is low. It should be at least %i',max(max(nComb)))
+end
+
+% covariance_zero = ones(nDataPoints,nDataPoints)*obj.CovarModel(zeros(1,size(obj.DistInput,2)),1);
 
 % Calculate the Covariance Matrix parts 1:nOriginalDataPoints
 part1 = reshape(diag(obj.Weights(1:nOriginalDataPoints,nComb(:,1))'*obj.CovargramVectors(1:nOriginalDataPoints,nComb(:,2))),nDataPoints,nDataPoints);
