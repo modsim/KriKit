@@ -143,7 +143,7 @@ end
 
 inputData = [];
 outputData = [];
-[filenameIn,pathIn] = uigetfile('*.txt','Select Import Data');
+[filenameIn,pathIn] = uigetfile('*.txt','Select Input Data');
 
 if filenameIn~=0
     inputData = importdata(strcat(pathIn,filenameIn));

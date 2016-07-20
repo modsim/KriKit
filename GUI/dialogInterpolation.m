@@ -523,13 +523,15 @@ nInputVar = handles.KrigingAnalysisObj.KrigingObjects{handles.currentObj}.getnIn
 currentRow = get(handles.popupmenuCurrentRow,'Value');
 data = get(handles.uitableInputParameters,'Data');
 counter = 1;
+inputNames = handles.KrigingAnalysisObj.getInputVarNames(handles.currentObj);
+idxVar = strcmp(inputNames,data{counter,1});
 % for iVar=setdiff(1:nInputVar,handles.InputVarIndiceMatrix(currentRow,1:3))
 if handles.InterpolationType<=3
 %     for iVar=setdiff(1:nInputVar,handles.InputVarIndiceMatrix(currentRow,1:end))
 %         handles.InputVarValueMatrix(currentRow,iVar) = str2double(data{counter,2});
 %         counter = counter + 1;
 %     end
-    handles.InputVarValueMatrix(currentRow,str2double(data{counter,1})) = str2double(data{counter,2});
+    handles.InputVarValueMatrix(currentRow,idxVar) = str2double(data{counter,2});
 else
     for iVar=setdiff(1:nInputVar,handles.InputVarIndiceMatrix(currentRow,1:3))
         handles.InputVarValueMatrix(currentRow,iVar) = str2double(data{counter,2});

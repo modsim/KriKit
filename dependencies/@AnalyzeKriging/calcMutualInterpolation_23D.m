@@ -192,7 +192,7 @@ end
 function [] = doInterpolation()
     if obj.ShowBasisFct==1
         % Calculated only evaluation of the basis function
-        evaluateBasisFunction(obj,KrigingObjectIndex,Input);
+        evaluateBasisFunction(obj,KrigingObjectIndex,Input,dimensionInterpolation);
     else
         % Actual Kriging Estimation
         if nKrigingObjectIndex==1
