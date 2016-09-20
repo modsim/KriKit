@@ -583,7 +583,7 @@ classdef AnalyzeKriging<handle
         end
         % ----------------------------------------------------------------
         function [nKrigingObjects]=getnKrigingObjects(obj)
-            nKrigingObjects = length(obj.getKrigingObjectNames);
+            nKrigingObjects = length(obj.KrigingObjects);
         end
         %------------------------------------------------------------------
         function []=checknKrigingObjects(obj)
@@ -788,7 +788,7 @@ classdef AnalyzeKriging<handle
         
         %------------------------------------------------------------------
         function []=setMaxSizeOfPredictions(obj,MaxSizeOfPredictions)
-            obj.MaxSizeOfPredictions = MaxSizeOfPredictions;
+%             obj.MaxSizeOfPredictions = MaxSizeOfPredictions;
             for iKrigingObject = 1 :  length(obj.KrigingObjectTypes)
                 obj.KrigingObjects{iKrigingObject}.setMaxSizeOfPredictions(MaxSizeOfPredictions); 
             end

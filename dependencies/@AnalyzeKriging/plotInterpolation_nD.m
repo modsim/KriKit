@@ -1,5 +1,5 @@
 function [] = plotInterpolation_nD(obj,varargin)
-% plotInterpolation_nD(KrigingObjectIndex)
+% plotInterpolation_nD(KrigingObjectIndex,Objective,testValue)
 %
 % Uses the data which are calculated by calcInterpolation_nD and
 % create a nD-Plot out of them
@@ -7,6 +7,10 @@ function [] = plotInterpolation_nD(obj,varargin)
 % Input: -
 % - KrigingObjectIndex ... index of the kriging object which should
 %                        be used in this function.
+% - Objective ... decide if the Kriging estimation ('KrigingInterpolation'), the expected
+%                 improvement ('ExpectedImprovement') or optimal regions
+%                 ('Optimum') shall be plotted
+% - testValue ... if Objective = 'Optimum', testValue can be used as
 %
 % Output: -
 %
@@ -22,14 +26,26 @@ function [] = plotInterpolation_nD(obj,varargin)
 
 %% Initialization
 KrigingObjectIndex = varargin{1};
+if length(varargin)>1
+    Objective = varargin{2};
+else
+    Objective = 'KrigingInterpolation';
+end
+if length(varargin)>2
+    testValue = varargin{3};
+else
+    testValue = [];
+end
+[minEstimation,maxEstimation,Estimation] = doInitialization(KrigingObjectIndex,Objective);
+
 KrigingObjectIndex = obj.checkKrigingIndizes(KrigingObjectIndex);
 KrigingObjectIndexArray = KrigingObjectIndex;
 KrigingObjectIndex = KrigingObjectIndexArray(1);
 
 % Collecting Kriging predicion
-Estimation = obj.KrigingPrediction_InterpolationnD{KrigingObjectIndex,1}(:,1);
-minEstimation = min(Estimation);
-maxEstimation = max(Estimation);
+% Estimation = obj.KrigingPrediction_InterpolationnD{KrigingObjectIndex,1}(:,1);
+% minEstimation = min(Estimation);
+% maxEstimation = max(Estimation);
 
 % Matrix containing all combination of input variables calues
 % which were used for prediciton
@@ -74,23 +90,63 @@ end
 if obj.getShowColorBar||obj.getnPlots>1
     subplot(nRows,obj.getnPlots+offsetIndices,ceil(obj.getnPlots/2))
 end
-title(obj.getKrigingObjectNames{KrigingObjectIndex},'FontSize',20)
+switch Objective
+        case 'KrigingInterpolation'
+            title(obj.getKrigingObjectNames{KrigingObjectIndex},'FontSize',20)
+        case 'ExpectedImprovement'
+            title(sprintf('Exp. Improvement: %s',obj.getKrigingObjectNames{KrigingObjectIndex}),'FontSize',20)
+    	case 'Optimum'
+            title(sprintf('Plateau Plot: %s',obj.getKrigingObjectNames{KrigingObjectIndex}),'FontSize',20)
+        otherwise
+            error('Unknown plotting objective')
+end
 
 % Colorbar
-if obj.getNormColors==1
-    caxis([minEstimation,maxEstimation])
-end
+
 if obj.getShowColorBar==1&&obj.getNormColors==1
     subplot(obj.getnPlots,obj.getnPlots+offsetIndices,obj.getnPlots+offsetIndices:obj.getnPlots+offsetIndices:obj.getnPlots*(obj.getnPlots+offsetIndices))
     colorbar
     axis off
+end
+if obj.getNormColors==1
+    caxis([minEstimation,maxEstimation])
 end
 
 % Adjust Color map
 colormap(gcf,obj.ColormapToolbox);
 
 %% ----------------------Nested Function -----------------------
-% labelPlotxAxis
+function [minEstimation,maxEstimation,plottingObjective] = doInitialization(KrigingObjectIndex,Objective)
+    minEstimation = inf;
+    maxEstimation = -inf;
+    
+    switch Objective
+        case 'KrigingInterpolation'
+            % In case of mutual kriging, the entries in
+            % KrigingPrediction_InterpolationnD for all kriging objects
+            % used are the same -> redunant information saving
+            plottingObjective = obj.KrigingPrediction_InterpolationnD{KrigingObjectIndex(1),1};
+            plottingObjective = plottingObjective(:,1);
+            minEstimation = min(minEstimation,min(plottingObjective));
+            maxEstimation = max(maxEstimation,max(plottingObjective));
+        case 'ExpectedImprovement'
+%                 plottingObjective = obj.calcExpectedImprovementFromPredictions(KrigingObjectIndex,obj.KrigingPrediction_InterpolationnD{KrigingObjectIndex,1});
+            prediction = obj.KrigingPrediction_InterpolationnD{KrigingObjectIndex,1};
+            prediction(:,1) = -obj.MinMax(KrigingObjectIndex)*prediction(:,1);
+            plottingObjective = obj.calcExpectedImprovementMainPart(KrigingObjectIndex,prediction);
+            minEstimation = min(minEstimation,min(plottingObjective));
+            maxEstimation = max(maxEstimation,max(plottingObjective));
+        case 'Optimum'
+            minEstimation = 0;
+            maxEstimation = 1;
+%                 plottingObjective = [];
+
+            [~,plottingObjective] = doTestForOptimality(obj,KrigingObjectIndex,5,testValue);
+        otherwise
+            error('Unknown plotting objective')
+    end
+end
+% -------------------------------------------------------------
 function [] = createContourPlot(iRow,iPlots2)
 
 % Indices where the input values equal to the expected ones
@@ -110,10 +166,30 @@ hold on
 % Actual Plotting
 OutputPart = Estimation(obj.Accuracy^2*obj.nPlots*(iRow-1)+1:obj.Accuracy^2*obj.nPlots*(iRow));
 OutputPart = OutputPart(logical(indexEstimation));
-if inputVarIndices(1)<inputVarIndices(2)
-    contourf(InputMatrixProto{inputVarIndices(iRow,1),iRow}',InputMatrixProto{inputVarIndices(iRow,2),iRow}',reshape(OutputPart,obj.Accuracy,obj.Accuracy)',obj.nContourLevels)
-else
-    contourf(InputMatrixProto{inputVarIndices(iRow,1),iRow}',InputMatrixProto{inputVarIndices(iRow,2),iRow}',reshape(OutputPart,obj.Accuracy,obj.Accuracy)',obj.nContourLevels)
+        
+switch Objective
+    case {'KrigingInterpolation','ExpectedImprovement'}
+        
+        contourf(InputMatrixProto{inputVarIndices(iRow,1),iRow}',...
+                 InputMatrixProto{inputVarIndices(iRow,2),iRow}',...
+                 reshape(OutputPart,obj.Accuracy,obj.Accuracy)',obj.nContourLevels)
+
+        % Set Colormap
+        colormap(gcf,obj.ColormapToolbox);
+    case 'Optimum'
+        indexValid = OutputPart;  
+        inputMatrixFull = obj.KrigingPrediction_InterpolationnD{KrigingObjectIndex,2};
+        inputMatrixPart = inputMatrixFull(obj.Accuracy^2*obj.nPlots*(iRow-1)+1:obj.Accuracy^2*obj.nPlots*(iRow),:);
+        inputMatrixPart = inputMatrixPart(logical(indexEstimation),:);
+        inputDataOpt = [inputMatrixPart(:,inputVarIndices(iRow,1)),inputMatrixPart(:,inputVarIndices(iRow,2))];
+        
+        % Fill in the t-test results
+        hold on
+        plot(inputDataOpt(indexValid,1),inputDataOpt(indexValid,2),'r*');
+        plot(inputDataOpt(~indexValid,1),inputDataOpt(~indexValid,2),'b*');
+        axis tight
+    otherwise
+    error('Unknown plotting objective')
 end
 
 % Adjusting color range

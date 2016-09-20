@@ -62,6 +62,8 @@ function [quality]=calcCrossOverQuality(obj,varargin)
         % Set the defined model parameters
     obj.setCovariogramModelParameters(varargin{1});
     covariogramBackupMatrix = obj.getCovariogramMatrix;
+    UseGPRMatlabBackup = obj.getUseMatlabRegressionGP;
+    obj.setUseMatlabRegressionGP(false)
     
     % Calculated initial inverse of the covariogramgram matrix. Later this
     % inverse is only updated
@@ -170,6 +172,7 @@ function [quality]=calcCrossOverQuality(obj,varargin)
     obj.nExperiments = nExpBackup;
     obj.UseInverse = UseInverseBackUP;
     obj.setCovariogramModelParameters(covParaBackup);
+    obj.setUseMatlabRegressionGP(UseGPRMatlabBackup)
     
     %% Set Functions
     % ---------------------------------------------------------------------

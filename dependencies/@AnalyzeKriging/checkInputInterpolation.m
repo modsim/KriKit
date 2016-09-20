@@ -25,8 +25,13 @@ switch obj.KrigingObjects{KrigingObjectIndex(1)}.getnInputVar
         end
         InputVar1 = 1;
     case 2
-        InputVar1 = 1;
-        InputVar2 = 2;
+        if length(varargin)>2
+            InputVar1 = varargin{2}(1);
+            InputVar2 = setdiff(1:2,InputVar1);
+        else
+            InputVar1 = 1;
+            InputVar2 = 2;
+        end
     otherwise
         switch  dimensionInterpolation
             case 2
@@ -55,8 +60,8 @@ if length(varargin)>3
     if length(unique([varargin{2},RemainingIndices]))~=obj.KrigingObjects{KrigingObjectIndex(1)}.getnInputVar
         error('Entries in "[InputVar1,InputVar2]" and "RemainingIndices" must be unique')
     end
-    if dimensionInterpolation>2&&(size(RemainingValues,1)*size(RemainingValues,2))~=obj.KrigingObjects{KrigingObjectIndex}.getnInputVar-2
-        error('RemainingValues must be a vector with length %i',obj.KrigingObjects{KrigingObjectIndex}.getnInputVar-2)
+    if dimensionInterpolation>2&&(size(RemainingValues,1)*size(RemainingValues,2))~=obj.KrigingObjects{KrigingObjectIndex(1)}.getnInputVar-2
+        error('RemainingValues must be a vector with length %i',obj.KrigingObjects{KrigingObjectIndex(1)}.getnInputVar-2)
     end
 
     % Transpose if neccesary

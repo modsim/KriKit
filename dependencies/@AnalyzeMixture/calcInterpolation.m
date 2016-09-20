@@ -76,7 +76,7 @@ if obj.getShowBasisFct==1
 %                                                                   [BasisFct{1}(obj.KrigingObjects{KrigingObjectIndex}.getBasisFctParameters,Input),...
 %                                                                    zeros(size(Input,1),1)];
                                                                
-    evaluateBasisFunction(obj,KrigingObjectIndex,Input);
+    evaluateBasisFunction(obj,KrigingObjectIndex,Input,size(Input,2));
     
 else
     

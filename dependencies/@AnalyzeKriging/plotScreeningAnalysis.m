@@ -1,5 +1,5 @@
 function [] = plotScreeningAnalysis(obj,varargin)
-% [] = plotScreeningAnalysis(obj,KrigingObjectIndex,Objective)
+% [] = plotScreeningAnalysis(KrigingObjectIndex,Objective,testValue)
 % KrigingObjectIndex ... index of the Kriging object which should
 %                        be used here
 % This function uses the data generated using "calcScreeningAnalysis" and
@@ -45,7 +45,7 @@ if length(KrigingObjectIndex)~=1
     error('KrigingObjectIndex must be a scalar')
 end
 Objective = varargin{2};
-[nCombinations,nPossibleCombi,minEstimation,maxEstimation,plottingObjective] = doInitialiaztion(KrigingObjectIndex,Objective);
+[nCombinations,nPossibleCombi,minEstimation,maxEstimation,plottingObjective] = doInitialization(KrigingObjectIndex,Objective);
 
 %% Actual Plotting
 figure()
@@ -82,7 +82,7 @@ if strcmp(Objective,'Optimum')
     colorbar('off')
 end
 %% Nested Functions
-function [nCombinations,nPossibleCombi,minEstimation,maxEstimation,plottingObjective] = doInitialiaztion(KrigingObjectIndex,Objective)
+function [nCombinations,nPossibleCombi,minEstimation,maxEstimation,plottingObjective] = doInitialization(KrigingObjectIndex,Objective)
     nCombinations = length(obj.KrigingPrediction_Screening{KrigingObjectIndex,1});
     nPossibleCombi = (obj.KrigingObjects{KrigingObjectIndex}.getnInputVar-1);
     minEstimation = inf;
@@ -94,7 +94,10 @@ function [nCombinations,nPossibleCombi,minEstimation,maxEstimation,plottingObjec
                 maxEstimation = max(maxEstimation,max(obj.KrigingPrediction_Screening{KrigingObjectIndex,1}{iCombinationNested}(:,1)));
                 plottingObjective = [];
             case 'ExpectedImprovement'
-                plottingObjective = obj.calcExpectedImprovementFromPredictions(KrigingObjectIndex,obj.KrigingPrediction_Screening{KrigingObjectIndex,1}{iCombinationNested});
+%                 plottingObjective = obj.calcExpectedImprovementFromPredictions(KrigingObjectIndex,obj.KrigingPrediction_Screening{KrigingObjectIndex,1}{iCombinationNested});
+                prediction = obj.KrigingPrediction_Screening{KrigingObjectIndex,1}{iCombinationNested};
+                prediction(:,1) = -obj.MinMax(KrigingObjectIndex)*prediction(:,1);
+                plottingObjective = obj.calcExpectedImprovementMainPart(KrigingObjectIndex,prediction);
                 minEstimation = min(minEstimation,min(plottingObjective));
                 maxEstimation = max(maxEstimation,max(plottingObjective));
             case 'Optimum'

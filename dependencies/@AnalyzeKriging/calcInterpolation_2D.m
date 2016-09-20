@@ -1,5 +1,5 @@
 function []=calcInterpolation_2D(obj,varargin)
-% [] = calcInterpolation_3D(KrigingObjectIndex,[InputVar1,InputVar2],RemainingIndices,RemainingValues)
+% [] = calcInterpolation_2D(KrigingObjectIndex,[InputVar1,InputVar2],RemainingIndices,RemainingValues)
 %
 % For Further Detail see documentation of "calcMutualInterpolation_23D()"
 % You can set: -

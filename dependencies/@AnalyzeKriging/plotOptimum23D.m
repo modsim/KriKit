@@ -43,7 +43,11 @@ function [inputData,indexValid]=plotOptimum23D(obj,varargin)
 
     KrigingObjectIndex = varargin{1};
     dimensionInterpolation = varargin{2};
-%     testValue = varargin{3};
+    if length(varargin)>2
+        testValue = varargin{3};
+    else
+        testValue = [];
+    end
     
     % In case of mutual Kriging interpolation, the prediction of all
     % objects is saved redundant, such that only the first index should
@@ -53,7 +57,7 @@ function [inputData,indexValid]=plotOptimum23D(obj,varargin)
     KrigingObjectIndex = KrigingObjectIndexArray(1);
     
 
-    [inputData,indexValid]=doTestForOptimality(obj,varargin{:});
+    [inputData,indexValid]=doTestForOptimality(obj,varargin{:},testValue);
     indexInvalid = ~indexValid;
     
     names = obj.getInputVarNames(KrigingObjectIndex(1));

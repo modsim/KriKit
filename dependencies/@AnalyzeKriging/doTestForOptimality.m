@@ -82,6 +82,11 @@ function [inputData,indexValid]=doTestForOptimality(obj,varargin)
             inputVar1=(obj.KrigingPrediction_Screening{KrigingObjectIndex,2}{iCombination}(:,inputVarIndices(1)));
             inputVar2=(obj.KrigingPrediction_Screening{KrigingObjectIndex,2}{iCombination}(:,inputVarIndices(2)));
             inputData = [inputVar1,inputVar2];
+        case 5
+            % Case Screening 
+            prediction = obj.KrigingPrediction_InterpolationnD{KrigingObjectIndex,1}(:,1);
+            sd = obj.KrigingPrediction_InterpolationnD{KrigingObjectIndex,1}(:,2);
+            inputData = obj.KrigingPrediction_InterpolationnD{KrigingObjectIndex,4};
         otherwise
             error('Diminsion is unusual')
     end

@@ -43,7 +43,7 @@ function M=invupdatered(A,r,c)
 %
 
 % Input checks.
-error(nargchk(1,3,nargin))
+% error(nargchk(1,3,nargin))
 [n,m] = size(A);
 if n~=m
     error('A should be square.');

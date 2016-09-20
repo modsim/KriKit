@@ -1,10 +1,11 @@
 function [ExpectedImprovement]=calcExpectedImprovementFromPredictions(obj,varargin)
-% Copyright 2014-2016: Lars Freier, Eric von Lieres
-% See the license note at the end of the file.
 % [ExpectedImprovement]=calcExpectedImprovement(obj,KrigingObjectIndex,predictions)
 % KrigingObjectIndex ... indicates the which Kriging Objective
 % is considered
 % prediction ... nPoints X 1 matrix containing Kriging predictions
+% 
+% Copyright 2014-2016: Lars Freier, Eric von Lieres
+% See the license note at the end of the file.
 
     KrigingObjectIndex = varargin{1};
     if length(KrigingObjectIndex)~=1

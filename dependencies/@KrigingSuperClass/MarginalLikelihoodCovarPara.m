@@ -27,7 +27,7 @@ calcCovariogramMatrix(obj);
 estimateBasisFctCoefficients(obj)
 C = obj.CovariogramMatrix(1:obj.nExperiments,1:obj.nExperiments);
 detC = det(C);
-numericalLimit = 1e-16;
+numericalLimit = realmin;
 if detC<=numericalLimit
     detC = numericalLimit;
 end
