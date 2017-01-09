@@ -50,11 +50,11 @@ end
 
         % Check
         expectedSize=(obj.nExperiments)*(obj.nExperiments-1)/2;
-        if size(obj.DistInput,1)~=expectedSize;
+        if size(obj.DistInput,1)~=expectedSize
             error('DistInput has dimension %ix%i but expected is 1x%i',size(obj.DistInput,1),size(obj.DistInput,2),expectedSize);
         end
 
-        if size(obj.VarianceEstimation,1)~=expectedSize;
+        if size(obj.VarianceEstimation,1)~=expectedSize
             error('VarianceEstimation has dimension %ix%i but expected is 1x%i',size(obj.VarianceEstimation,1),size(obj.VarianceEstimation,2),expectedSize);
         end
     elseif obj.CovariogramUsesAbsoluteDistance
@@ -65,7 +65,14 @@ end
         % one input variable between the difference measurements
 
         % Calculate for every combination of the experiments
-        indices = nchoosek(1:obj.nExperiments,2);
+        try
+            indices = VChooseK(1:obj.nExperiments,2);
+        catch ex
+            warning('VChooseK could not be used. Use Matlabs nchoosek insteads')
+            warning(ex.message);
+            indices = nchoosek(1:obj.nExperiments,2);
+        end
+        
         obj.DistInput =  abs(obj.InputData(indices(:,1),:)-obj.InputData(indices(:,2),:));
         obj.VarianceEstimation =  ((obj.OutputData(indices(:,1),:)-obj.OutputData(indices(:,2),:)).^2)/2;
     elseif obj.CovariogramUsesAbsoluteValues

@@ -28,6 +28,7 @@ if size(obj.Weights,2)<max(nComb(:,1))||size(obj.CovargramVectors,2)<max(nComb(:
 end
 
 % covariance_zero = ones(nDataPoints,nDataPoints)*obj.CovarModel(zeros(1,size(obj.DistInput,2)),1);
+% obj.Weights = obj.Weights*(max(obj.getOutputData)-min(obj.getOutputData));
 
 % Calculate the Covariance Matrix parts 1:nOriginalDataPoints
 part1 = reshape(diag(obj.Weights(1:nOriginalDataPoints,nComb(:,1))'*obj.CovargramVectors(1:nOriginalDataPoints,nComb(:,2))),nDataPoints,nDataPoints);
@@ -93,7 +94,9 @@ part4 = part4 + eye(size(part4,1))*obj.sigmaError^2;
 
 % Final Result
 obj.CovarMatrixOfPredictions = part4-part1-part2+part3;
-
+if obj.getNormOutput
+    obj.CovarMatrixOfPredictions = obj.CovarMatrixOfPredictions*(max(obj.getOutputData)-min(obj.getOutputData))^2;
+end
 
 % if obj.NormOutput
 %     obj.CovarMatrixOfPredictions = (obj.CovarMatrixOfPredictions-0)*(max(obj.getOutputData)-min(obj.getOutputData))^2;

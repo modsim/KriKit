@@ -58,9 +58,11 @@ if length(varargin)>3
     RemainingIndices = varargin{3};
     RemainingValues = varargin{4};
     if length(unique([varargin{2},RemainingIndices]))~=obj.KrigingObjects{KrigingObjectIndex(1)}.getnInputVar
+        errorCheck();
         error('Entries in "[InputVar1,InputVar2]" and "RemainingIndices" must be unique')
     end
     if dimensionInterpolation>2&&(size(RemainingValues,1)*size(RemainingValues,2))~=obj.KrigingObjects{KrigingObjectIndex(1)}.getnInputVar-2
+        errorCheck();
         error('RemainingValues must be a vector with length %i',obj.KrigingObjects{KrigingObjectIndex(1)}.getnInputVar-2)
     end
 

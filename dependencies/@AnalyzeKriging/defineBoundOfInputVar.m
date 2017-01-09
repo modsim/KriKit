@@ -19,9 +19,9 @@ function [] = defineBoundOfInputVar(obj,varargin)
             obj.UBInputVarInterpolation{KrigingObjectIndex(iKriging)} = max(obj.KrigingObjects{KrigingObjectIndex(iKriging)}.getInputData);
         end
         
-        if sum(obj.LBInputVarInterpolation{KrigingObjectIndex(iKriging)}>=obj.UBInputVarInterpolation{KrigingObjectIndex(iKriging)})>=1
-            error('One of the upper bounds is smaller or equal to the associated lower bound. ')
-        end
+%         if sum(obj.LBInputVarInterpolation{KrigingObjectIndex(iKriging)}>=obj.UBInputVarInterpolation{KrigingObjectIndex(iKriging)})>=1
+%             error('One of the upper bounds is smaller or equal to the associated lower bound. ')
+%         end
     end
 end
 % =============================================================================

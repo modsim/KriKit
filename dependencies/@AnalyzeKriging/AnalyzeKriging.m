@@ -3,7 +3,7 @@ classdef AnalyzeKriging<handle
 % See the license note at the end of the file.
     
     %% Private Members
-    properties(GetAccess='public',SetAccess='private')
+    properties(GetAccess='public',SetAccess='public')
         KrigingObjects = cell(0);
     end
     %% Protected Members
@@ -28,6 +28,7 @@ classdef AnalyzeKriging<handle
         SuppressFigure=0;
         % Decide how many point of each input variable shall tested
         Accuracy = 100;
+        AccuracyOutput = 100;
         % Decide if only the basis function should be plotted
         ShowBasisFct = 0;
         % Plot Lower and Upper Bounds (1) or not (0)
@@ -83,6 +84,9 @@ classdef AnalyzeKriging<handle
         UseDataPointsAsComparisonPoint = false;
         % Signifcance level (error Erro Type I) used for z-test
         SignificanceLevel = 0.05;
+        % Used for the contour plot in order to defined a minimum value
+        % which is plotted. This prevents that the entrie plot is colored
+        ThresholdQuantile = -inf;
         %% Interpolation Options
         % Subplot contains nPlots X nPlots figures
         nPlots =5;
@@ -181,6 +185,8 @@ classdef AnalyzeKriging<handle
         % Matrix (nLevelX3) containing the color map used for plots like 3D
         % interpolation
         ColormapToolbox = [];
+        %% Prediction of Pareto Front
+        RepeatDesign = true;
     end
     methods
         %% Constructor
@@ -355,6 +361,10 @@ classdef AnalyzeKriging<handle
         % ----------------------------------------------------------------
         function [Accuracy]=getAccuracy(obj)
             Accuracy = obj.Accuracy;
+        end
+        % ----------------------------------------------------------------
+        function [AccuracyOutput]=getAccuracyOutput(obj)
+            AccuracyOutput = obj.AccuracyOutput;
         end
         % ----------------------------------------------------------------
         function [ShowBounds]=getShowBounds(obj)
@@ -657,9 +667,27 @@ classdef AnalyzeKriging<handle
         function [PlottingRange]=getPlottingRange(obj)
             PlottingRange = obj.PlottingRange;
         end
+        % ----------------------------------------------------------------
+        function [RepeatDesign] = getRepeatDesign(obj)
+            RepeatDesign = obj.RepeatDesign;
+        end
+        % ----------------------------------------------------------------
+        function [ThresholdQuantile] = getThresholdQuantile(obj)
+            ThresholdQuantile = obj.ThresholdQuantile;
+        end
         %% Set Functions
         function []=setAccuracy(obj,Accuracy)
+            if any(size(Accuracy)>1)
+                error('Accuracy has to be a scalar')
+            end
             obj.Accuracy = Accuracy;
+        end
+        % ----------------------------------------------------------------
+        function []=setAccuracyOutput(obj,AccuracyOutput)
+            if any(size(AccuracyOutput)>1)
+                error('AccuracyOutput has to be a scalar')
+            end
+            obj.AccuracyOutput = AccuracyOutput;
         end
         % ----------------------------------------------------------------
         function []=setShowBounds(obj,ShowBounds)
@@ -958,13 +986,27 @@ classdef AnalyzeKriging<handle
             if isempty(varargin)||isempty(varargin{1})
                 obj.ColormapToolbox = load('ColormapWinterInverse.txt');
                 return;
+            elseif strcmp(varargin{1},'FZJ')
+                obj.ColormapToolbox = load('ColormapFZJ.txt');
+                return;
             end
             
-            if size(varargin{1},2)~=3
+            if size(varargin{1},2)~=3&&~ischar(varargin{1})
                 error('ColormapToolbox must have three columns')
             end
             
             obj.ColormapToolbox = varargin{1};
+        end
+        % ----------------------------------------------------------------
+        function [] = setRepeatDesign(obj,RepeatDesign)
+            if ~islogical(RepeatDesign)
+                error('RepeatDesign must be logical')
+            end
+            obj.RepeatDesign = RepeatDesign;
+        end
+        % ----------------------------------------------------------------
+        function [] = setThresholdQuantile(obj,ThresholdQuantile)
+            obj.ThresholdQuantile = ThresholdQuantile;
         end
         
     end

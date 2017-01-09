@@ -22,13 +22,13 @@ function [ExpectedImprovement]=calcExpectedImprovement_MO(obj,varargin)
 %           [boolConstraintHolds]=inequalityConstraintOutput(estimationMean,estimationSD)
 %           With 
 %           estimationMean ... kriging prediction at the point of interest
-%                              given in "estimationPoints" [nPointsX1]
+%                              given in "estimationPoints" [nPointsXnObj]
 %           estimationSD ... kriging prediction error at the point of
 %                            interest, given in "estimationPoints"
 %                            [nPointsX1] 
 %           boolConstraintHolds ... boolean output vector containing true
 %                                   if the point hold the constraint
-%                                   [nPointsX1] 
+%                                   [nPointsXnObj] 
 %
 % - DegreeOfExpectedImprovement ... exploration factor for adjusting the
 %                   trade-off between exploitation and exploration. 
@@ -42,7 +42,17 @@ function [ExpectedImprovement]=calcExpectedImprovement_MO(obj,varargin)
 % You can get: 
 %
 % Note: Before Running "calcExpectedImprovement_MO" you should calculate
-% the run "determineParetoSet()"
+% the run "determineParetoSet()". 
+% 
+% Note: For more information about how to introduces fuzzy inequality
+% constraints for the output see documentation for
+% "modExpImprByOutputConstr". For fuzzy constraints the probability is
+% calculated that these constraints hold. If fuzzy constraints are
+% available than the modified expected improvement value is a compormise
+% between achieving high improvement and not violating the constraints.
+% This should be prefered for Markov Chain Monte Charlo Design of
+% Experiment instead of hard constraints (like
+% "InequalityConstraintOutputHandle" )
 %
 % Copyright 2014-2016: Lars Freier, Eric von Lieres
 % See the license note at the end of the file.
@@ -138,6 +148,12 @@ switch nObj
         end
 end
 
+% Include Inequality constraint distribution into final expected
+% improvement
+if isprop(obj,'InequalityConstraintOutputDistribution')&&~isempty(obj.getInequalityConstraintOutputDistribution)
+    estimationMeanProto = bsxfun(@times,estimationMean,-obj.MinMax(objectiveIndices));
+    ExpectedImprovement = obj.modExpImprByOutputConstr(ExpectedImprovement,estimationMeanProto,estimationSD);
+end
 
 end
 

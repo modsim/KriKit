@@ -1,5 +1,5 @@
 function [expectedParetoCurve,deviationParetoCurve,pCover,gridOutput] = predictParetoCurve(obj,varargin)
-% [expectedParetoCurve,deviationParetoCurve,pCover,gridOutput] = predictParetoCurve(krigingObjVector,nRealizations,nSampleLocations,nGridPointEachDirection,inEqualityCellArray)
+% [expectedParetoCurve,deviationParetoCurve,pCover,gridOutput] = predictParetoCurve(krigingObjVector,nRealizations,nSampleLocations,nGridPointEachDirection,inEqualityCellArray,OutputConstraints)
 %
 % This function estimated the expected pareto curve pareto based on
 % conditional simulation results. Theory is described in detail in is
@@ -57,6 +57,9 @@ function [expectedParetoCurve,deviationParetoCurve,pCover,gridOutput] = predictP
 %                           out a (nSamplePointsX1)-boolean vector. Where
 %                           each entry indicates if the associated sample
 %                           point is valid (true) or not (false).
+% - OutputConstraints ... a matrix (nKrigingObjectsX2) containing the
+%                         feasible lower and upperbound for the output
+%                         space which shall be investigated
 % Output: 
 % - expectedParetoCurve ... objective matrix containing the Pareto points
 %                           (nParetoPointsXnKrigingObjects)
@@ -69,9 +72,13 @@ function [expectedParetoCurve,deviationParetoCurve,pCover,gridOutput] = predictP
 % You can set:
 % - setShowData ... Scan solution space also w.r.t. to the given output
 %   data. This might needed if you want to plot the expected Pareto Curve
-%   together with the data
+%   together with the data. Caution: This might lead to a ncombinatorical
+%   explosion!
 % - LB(UB)InputVarInterpolation ... restict the input space for the
 %                                   conditional simulation
+%  - RepeatDesign ... If "false" than a different lattin hypercube design
+%                     is used for each realization (more roust but more
+%                     expensive)
 %
 % You can get: - 
 %
@@ -96,11 +103,19 @@ else
     nGridPointEachDirection = 1e6^(1/nObjects);
     inequalityConstraintInput = {};
 end
-if length(varargin)>5&&~isempty(varargin{6})
-    inEqualityCellArray = varargin{6};
+if length(varargin)>4&&~isempty(varargin{5})
+    inEqualityCellArray = varargin{5};
 else
     inEqualityCellArray = {};
 end
+if length(varargin)>5&&~isempty(varargin{6})
+    OutputConstraints = varargin{6};
+else
+    OutputConstraints = ones(nObjects,2);
+    OutputConstraints(:,1) = -inf;
+    OutputConstraints(:,2) = inf;
+end
+
 
 % If inequalityConstraintInput is given, nSampleLocations might change
 defineBoundOfInputVar(obj,krigingObjVector(krigingObjVector(1)));
@@ -146,7 +161,7 @@ for iRealization = 1 : nRealizations
 
     paretoSets{iRealization} = determineParetoSet_Mex(...
             bsxfun(@times,realizationCurveMaxtrix(:,indexSet),-obj.MinMax(krigingObjVector)) );
-
+        
     % Save Pareto Set in Matrix
     totalParetoSet = [totalParetoSet;paretoSets{iRealization}];
     nMemberPratoCurve(iRealization) = size(paretoSets{iRealization},1);
@@ -161,7 +176,12 @@ end
 [rangeToCheck] = determineRangeForGrid;
 
 % Create Grid
-gridX = createNDGRID(rangeToCheck(:,1),rangeToCheck(:,2),nGridPointEachDirection);
+if obj.ShowData
+    gridX = createNDGRID(rangeToCheck(:,1),rangeToCheck(:,2),nGridPointEachDirection,totalParetoSet);
+else
+    gridX = createNDGRID(rangeToCheck(:,1),rangeToCheck(:,2),nGridPointEachDirection);
+end
+
 nGridPoints = size(gridX,1);
 
 % Actual Calculation
@@ -217,7 +237,8 @@ deviationParetoCurve = mainMexCalcPcover(nGridPoints,...
               expectedParetoCurve,...
               pCover);
  deviationParetoCurve(1:end) = deviationParetoCurve(end:-1:1);
-
+ pCover(1:end) = pCover(end:-1:1);
+ 
 %% #### Convert everything back to the original space #### 
 expectedParetoCurve = bsxfun(@times,expectedParetoCurve,-obj.MinMax(krigingObjVector));
 gridOutput = bsxfun(@times,gridX,-obj.MinMax(krigingObjVector));
@@ -229,7 +250,7 @@ gridOutput = bsxfun(@times,gridX,-obj.MinMax(krigingObjVector));
 function [rangeToCheck] = determineRangeForGrid()
     
     % Initialization
-    rangeToCheck = [];
+    rangeToCheck = nan(nObjects,2);
     
     % Check provided sample points
     if obj.getShowData
@@ -247,11 +268,17 @@ function [rangeToCheck] = determineRangeForGrid()
                 rangeToCheck(iKrigingObj,:) = [min(paretoSets{iRealizationNested}(:,iKrigingObj)),...
                                                max(paretoSets{iRealizationNested}(:,iKrigingObj))];
             else
-                rangeToCheck(iKrigingObj,:) = [min([rangeToCheck(iKrigingObj,1),rangeToCheck(iKrigingObj,2),min(paretoSets{iRealizationNested}(:,iKrigingObj))]),...
-                                    max([rangeToCheck(iKrigingObj,1),rangeToCheck(iKrigingObj,2),min(paretoSets{iRealizationNested}(:,iKrigingObj))])];
+                
+                pointsToCheck = [rangeToCheck(iKrigingObj,1),...
+                                 rangeToCheck(iKrigingObj,2),...
+                                 (paretoSets{iRealizationNested}(:,iKrigingObj))'];
+                rangeToCheck(iKrigingObj,:) = ...
+                    [min(pointsToCheck),...
+                     max(pointsToCheck)];
             end
         end
     end
+    
 
     % Check if scale of data prediction are similar
     if obj.getShowData
@@ -267,6 +294,16 @@ function [rangeToCheck] = determineRangeForGrid()
         end
     end
     
+    if ~isempty(OutputConstraints)
+        if ~all(size(rangeToCheck)==size(OutputConstraints))
+            error('OutputConstraints should be of Size nKrigingObjectsX2')
+        end
+        rangeToCheckProto = bsxfun(@times,(-obj.MinMax(krigingObjVector)'),OutputConstraints);
+        rangeToCheckProto = sort(rangeToCheckProto,2); % Guaranty that LBis first column
+        
+        rangeToCheck(~isinf(rangeToCheckProto)) = rangeToCheckProto(~isinf(rangeToCheckProto));
+        
+    end
 end
 
 % ----------------------------------------------------------
@@ -274,16 +311,46 @@ function [expectedParetoPoints] = determineExpectedParetoCurve()
     epsilon = 1e-10;
     lowerLevel = 0;
     upperLevel = 1;
+    deltaNew = inf;
+    deltaOld = inf;
+    HV_QuantileOld = inf;
+    upperLevelOld = upperLevel;
+    lowerLevelOld = lowerLevel;
+    
+    firstTime = true;
     while upperLevel-lowerLevel>epsilon
-        pointsSelected = pCover>=(upperLevel+lowerLevel)/2;
-        HV_Quantile = Hypervolume_MEX(gridX(pointsSelected,:),bsxfun(@times,obj.ReferencePointHyperVolume(krigingObjVector),-obj.MinMax(krigingObjVector)));
-
-        if HV_Quantile<HV_Mean
-            upperLevel = (upperLevel+lowerLevel)/2;
-        else
-            lowerLevel = (upperLevel+lowerLevel)/2;
+        if ~firstTime
+            deltaOld = deltaNew;
+            HV_QuantileOld = HV_Quantile;
         end
+        
+        pointsSelected = pCover>=(upperLevel+lowerLevel)/2;
+        HV_Quantile = Hypervolume_MEX(gridX(pointsSelected,:),bsxfun(@times,obj.ReferencePointHyperVolume(krigingObjVector),--obj.MinMax(krigingObjVector)));
+
+        
+        deltaNew = abs(HV_Quantile-HV_Mean);
+        % Reverse process if the result is worse
+        if (~firstTime)&&(deltaOld<deltaNew)
+            upperLevel = upperLevelOld;
+            lowerLevel = lowerLevelOld;
+            if ~(HV_QuantileOld<HV_Mean)
+                upperLevel = (upperLevelOld+lowerLevelOld)/2;
+            else
+                lowerLevel = (upperLevelOld+lowerLevelOld)/2;
+            end
+        else
+            upperLevelOld = upperLevel;
+            lowerLevelOld = lowerLevel;
+            if HV_Quantile<HV_Mean
+                upperLevel = (upperLevel+lowerLevel)/2;
+            else
+                lowerLevel = (upperLevel+lowerLevel)/2;
+            end
+        end
+        
+        firstTime=false;
     end
+    
     HV_Quantile = Hypervolume_MEX(gridX(pointsSelected,:),bsxfun(@times,obj.ReferencePointHyperVolume(krigingObjVector),-obj.MinMax(krigingObjVector)));
 
     quantileNumber = (upperLevel+lowerLevel)/2;
@@ -331,10 +398,26 @@ function [sampleLocations] = createGrid()
         end
     else
         nSamplePoints = nSampleLocations;
-        sampleLocationsProto = lhsdesign(nSamplePoints,nInputVar);
-        sampleLocationsProto(:,:) = bsxfun(@times,sampleLocationsProto,InputRange(:,2)'-InputRange(:,1)');
-        sampleLocationsProto(:,:) = bsxfun(@plus,sampleLocationsProto,InputRange(:,1)');
-        sampleLocations = repmat(sampleLocationsProto,1,nRealizations);
+        
+        if obj.RepeatDesign
+            nRealizationsNested = 1;
+            % Is changed after loop again
+            sampleLocations = zeros(nSamplePoints,nInputVar); 
+        else
+            nRealizationsNested = nRealizations;
+            sampleLocations = zeros(nSamplePoints,nInputVar*nRealizations);
+        end
+        
+        for iReal = 1: nRealizationsNested
+            sampleLocationsProto = lhsdesign(nSamplePoints,nInputVar);
+            sampleLocationsProto(:,:) = bsxfun(@times,sampleLocationsProto,InputRange(:,2)'-InputRange(:,1)');
+            sampleLocationsProto(:,:) = bsxfun(@plus,sampleLocationsProto,InputRange(:,1)');
+            sampleLocations(:,nInputVar*(iReal-1)+1:nInputVar*iReal) = sampleLocationsProto(:,:);
+        end
+        
+        if obj.RepeatDesign
+            sampleLocations = repmat(sampleLocationsProto,1,nRealizations);
+        end
 
     end
 

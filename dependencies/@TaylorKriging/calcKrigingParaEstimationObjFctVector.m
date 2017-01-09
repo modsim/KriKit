@@ -9,7 +9,6 @@ function [quality] = calcKrigingParaEstimationObjFctVector(obj,para)
     if isempty(obj.CovariogramMatrix)
         obj.calcCovariogramMatrix
     end
-    quality = 0;
 
     if length(para)~=obj.getnBasisFctParameters
         warning('Number of given parameters (%i) and the needed number of parameters (%i) differes from each other',length(para),obj.getnBasisFctParameters)
@@ -18,32 +17,24 @@ function [quality] = calcKrigingParaEstimationObjFctVector(obj,para)
         error('Not enough derivatives are provided')
     end
     C = obj.CovariogramMatrix(1:obj.getnExperiments,1:obj.getnExperiments);
-    minC=min(min(abs(C)));
-    C = C/minC; % Normalization for reducing numerical problems
+%     minC=min(min(abs(C)));
+%     C = C/minC; % Normalization for reducing numerical problems
     
     F = zeros(obj.getnExperiments,1+obj.nBasisFctDerivative);
     
         % Basis Function
-    F(:,1) = obj.getBasisFct{1}(para,obj.getInputData);
+    F(:,1) = obj.getBasisFct{1}(para,obj.InputData);
         % Derivatives
     for iDerivative=1:obj.nBasisFctDerivative
-        F(:,iDerivative+1) = obj.getBasisFctDerivative{iDerivative}(para,obj.getInputData);
+        F(:,iDerivative+1) = obj.getBasisFctDerivative{iDerivative}(para,obj.InputData);
     end
     
     if isempty(obj.getInvCoVar)
         obj.InvCoVar = inv(C);
     end
 
-%     matrixAlmostEye = eye(size(F,2));
-%     matrixAlmostEye(1) = 0;
-%     b=F'*(obj.InvCoVar*(obj.getOutputData));
-%     M=F'*(obj.InvCoVar*F);
-%     quality = matrixAlmostEye*inv(M)*b;
-
-    saveCoeff = (F'*(obj.InvCoVar*F))\(F'*(obj.InvCoVar*(obj.getOutputData)));
-%     saveCoeff = (F'*eye(obj.nExperiments)*F)\(F'*(eye(obj.nExperiments)*(obj.getOutputData)));
-%     a= F'*(obj.InvCoVar*(obj.getOutputData));
-%     quality2 = a-a'*[1;zeros(length(saveCoeff)-1,1)];
+%     obj.InvCoVar(1:5,1:5)
+    saveCoeff = (F'*(obj.InvCoVar*F))\(F'*(obj.InvCoVar*(obj.OutputData)));
     quality = saveCoeff(2:end);
     
 end

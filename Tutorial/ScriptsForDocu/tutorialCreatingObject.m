@@ -138,7 +138,11 @@ KrigingObj.KrigingObjects{indexKrigingObj}.setBasisFct('polynomial',0)
 % Matlab's statistic toolbox (2015b and newer) is able to efficiently
 % estimate the covariogram parameters. This is in general very robust and
 % should be used if possible
-KrigingObj.KrigingObjects{indexKrigingObj}.setUseMatlabRegressionGP(true);
+try
+    KrigingObj.KrigingObjects{indexKrigingObj}.setUseMatlabRegressionGP(true);
+catch ex
+    warning(ex.message)
+end
 
 %%%
 % Alternatively, one of the integrated solver can be used. Here, an open

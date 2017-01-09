@@ -41,6 +41,7 @@ classdef KrigingSuperClass<handle
         % CovariogramModelChoice 8: as  CovariogramModelChoice 7 but with
         %                           weightedEuclidean = sqrt(sum(distance^2/obj.theta.^2))));
         % sigmaError is only added if distance is a vector of zeros.
+        %
         % CovariogramModelChoice has to be set manually after setting
         % input and output data. No default value is set.
         CovariogramModelChoice = -1;
@@ -151,6 +152,7 @@ classdef KrigingSuperClass<handle
         p=2;
         % Exponential radial function = sigmaError + sigma*exp(-(x/theta)^p)
         sigmaError = 1e-10;
+        HeterogeneousNoise = [];
         % Squared difference between model of variance and the
         % actual empirical estimation
         ModelErrorVar = inf;
@@ -259,7 +261,9 @@ classdef KrigingSuperClass<handle
         % Decide if Matlab GPR should be use (needs Matlab version >2015b and Statistic Toolbox)
         UseMatlabRegressionGP = false;
         GPR_Model = [];
-        
+        %% Noise Modeling
+        KriKitObjNoise = [];
+        ThresholdSolver = 1e-6;
     end
     
     methods
@@ -317,6 +321,10 @@ classdef KrigingSuperClass<handle
         solveLeastSquareCovariogramGA2(obj);
         % Generate RGP model for further Kriging estimation
         generateRegressionGPModel(obj);
+        %--------------------------------------
+        % Estimates a model for heterodestatic noise
+        generateNoiseModel(obj,varargin)
+        %--------------------------------------
         % gaCreationUniformFeasible
         function[Population]=gaCreationUniformFeasible(obj,GenomeLength,FitnessFcn,options)
             Population = bsxfun(@times,rand(sum(options.PopulationSize),GenomeLength),(obj.getUBBasisFctParameters - obj.getLBBasisFctParameters));
@@ -372,6 +380,10 @@ classdef KrigingSuperClass<handle
         [realizationCurve,nonNormSampleLocations] = doConditionalSimulation_SeqSim(obj,varargin)
         % ----------------------------------------------------------------
         [realizationCurve,nonNormSampleLocations] = doConditionalSimulation_ResAlgInEq(obj,varargin)
+        % ----------------------------------------------------------------
+        [realizationCurve,nonNormSampleLocations] = doConditionalSimulation_Decomposition(obj,varargin)
+        % ----------------------------------------------------------------
+        [realizationCurve,nonNormSampleLocations] = doConditionalSimulation_ResAlgInEqTest(obj,varargin)
         % ----------------------------------------------------------------
         function [] = checkIfNumberOfParameterValuesIsCorrect(obj,varargin)
             if(length(varargin{1})>obj.nCovariogramParameters)
@@ -743,7 +755,18 @@ classdef KrigingSuperClass<handle
         function [CovariogramUsesAbsoluteDistance]=getCovariogramUsesAbsoluteDistance(obj)
             CovariogramUsesAbsoluteDistance = obj.CovariogramUsesAbsoluteDistance;
         end
-
+        %------------------------------------------------------------------
+        function [heterogeneousNoise]=getHeterogeneousNoise(obj)
+            heterogeneousNoise = obj.HeterogeneousNoise;
+        end
+        %------------------------------------------------------------------
+        function [KriKitObjNoise]=getKriKitObjNoise(obj)
+            KriKitObjNoise = obj.KriKitObjNoise;
+        end
+        %------------------------------------------------------------------
+        function [ThresholdSolver]=getThresholdSolver(obj)
+            ThresholdSolver = obj.ThresholdSolver;
+        end
         %% Set Functions
         function [] = setInputData(obj,Input)
             % Define the InputVariables the number of rows should be equal
@@ -771,6 +794,7 @@ classdef KrigingSuperClass<handle
             obj.InputData_True = Input;
             obj.nExperiments = size(Input,1);
             obj.nInputVar = size(Input,2);
+            obj.HeterogeneousNoise = [];
             if(obj.nInputVar>obj.nExperiments)
                 warning('InputData: More Input variables as Experiments');
             end
@@ -884,17 +908,8 @@ classdef KrigingSuperClass<handle
             
             switch obj.CovariogramModelChoice
                 case 1
-%                     if(length(varargin{1})>2)
-%                         warning('The exponential model needs only 2 parameter but %i are defined!',length(varargin{1}));
-%                     end
-%                     if(length(varargin{1})<2)
-%                         error('The exponential model needs 2 parameter but only %i are defined!',length(varargin{1}));
-%                     end
                     obj.theta       = varargin{1}(1);
                     obj.sigma       = varargin{1}(2);
-                    
-%                     obj.CovariogramUsesEuclideanDistance = true;
-%                     obj.p           = varargin{1}(3);
                 case {2,5,7}
                     obj.theta       = varargin{1}(1);
                     obj.sigma       = varargin{1}(2);
@@ -914,23 +929,17 @@ classdef KrigingSuperClass<handle
                     error('Non-acceptable model choice. The parameter CovariogramModelChoice = %i is not allowed',obj.CovariogramModelChoice);
             end
             
-%             switch obj.CovariogramModelChoice
-%                 case {1,2,5,7}
-%                     obj.CovariogramUsesEuclideanDistance = true;
-%                     obj.CovariogramUsesAbsoluteDistance = false;
-%                 case {3,4,6,8}
-%                     obj.CovariogramUsesAbsoluteDistance = true;
-%                     obj.CovariogramUsesEuclideanDistance = false;
-%                 otherwise
-%                     error('CovariogramModelChoice = %d is not defined',obj.CovariogramModelChoice)
-%             end
-            
-            try
-                obj.calcCovariogramMatrix();
-            catch exception
-                warning('Covariogram Matrix could be recalculated! Do it manually')
-                % Rethrow original error.
-                rethrow(exception)
+            if ~obj.UseMatlabRegressionGP
+                if isempty(obj.DistInput)
+                    obj.estimateVariance
+                end
+                try
+                    obj.calcCovariogramMatrix();
+                catch exception
+                    warning('Covariogram Matrix could be recalculated! Do it manually')
+                    % Rethrow original error.
+                    rethrow(exception)
+                end
             end
         end
         %------------------------------------------------------------------
@@ -991,7 +1000,7 @@ classdef KrigingSuperClass<handle
             % the first values
             obj.setCovariogramParameterBoundsAndValues(Model);
             
-            obj.estimateVariance
+%             obj.estimateVariance
         end
 
         %------------------------------------------------------------------
@@ -1002,7 +1011,7 @@ classdef KrigingSuperClass<handle
             % varargin = 3 ... exponential with separated thethas and ps (multigaussian) (sigmaError + sigma*exp(-sum_(h=1)^k(theta(h)*abs(x(i,h)-x(j,h))^p(h)))
             Model = varargin{1};
             minValue = 1e-10;
-            switch Model;
+            switch Model
                 case 1
                     obj.LBCovariogramModelParameters = [minValue,minValue];
                     obj.UBCovariogramModelParameters = [1e10,1e10];
@@ -1067,6 +1076,7 @@ classdef KrigingSuperClass<handle
             end
             
             % Decide for the distance calculation
+            covariogramUsesEuclideanDistanceCheck = obj.CovariogramUsesEuclideanDistance;
             switch obj.CovariogramModelChoice
                 case {1,2,5,7}
                     obj.CovariogramUsesEuclideanDistance = true;
@@ -1076,6 +1086,12 @@ classdef KrigingSuperClass<handle
                     obj.CovariogramUsesEuclideanDistance = false;
                 otherwise
                     error('CovariogramModelChoice = %d is not defined',obj.CovariogramModelChoice)
+            end
+            
+            if ~obj.UseMatlabRegressionGP
+                if isempty(obj.DistInput)||(covariogramUsesEuclideanDistanceCheck~=obj.CovariogramUsesEuclideanDistance)
+                    obj.estimateVariance
+                end
             end
         end
         %------------------------------------------------------------------
@@ -1116,6 +1132,9 @@ classdef KrigingSuperClass<handle
         end
         %------------------------------------------------------------------
         function []=setNormOutput(obj,NormOutput)
+%             if NormOutput
+%                 error('NormOutput cannot be used curretly otherwise problem with covariance calculation occur and consequently pridiction variance is not correct')
+%             end
             % Decide if the output shall be normalized(1) or not (0)
             if ~isempty(obj.OutputData)
                 warning('"OutputData" is not empty. Please define "OutputData" only after setting the "NormOutput"-option')
@@ -1402,6 +1421,44 @@ classdef KrigingSuperClass<handle
             
             obj.UseMatlabRegressionGP = UseMatlabRegressionGP;
         end
+        %------------------------------------------------------------------
+        function []=setHeterogeneousNoise(obj,heterogeneousNoise)
+            if (~(any(size(heterogeneousNoise)==obj.nExperiments)&&any(size(heterogeneousNoise)==1))&&~isempty(heterogeneousNoise))
+                error('heterogeneousNoise should be a vector nExperimentsX1(%iX1)',obj.nExperiments)
+            end
+            if any(size(heterogeneousNoise,1)==1)
+                heterogeneousNoise = heterogeneousNoise';
+            end
+            if isempty(obj.HeterogeneousNoise)
+                warning('"HeterogeneousNoise" has change, please run "calcCovariogramMatrix" again')
+            end
+            obj.HeterogeneousNoise = heterogeneousNoise;
+            
+        end
+        %------------------------------------------------------------------
+        function []=setKriKitObjNoise(obj,KriKitObjNoise)
+            if ~isempty(KriKitObjNoise)
+                heterogenousNoise = exp(KriKitObjNoise.prediction(obj.getInputData));
+                heterogenousNoise = sqrt(heterogenousNoise(:,1));
+            else
+                heterogenousNoise = [];
+            end
+            obj.setHeterogeneousNoise(heterogenousNoise)
+            obj.calcCovariogramMatrix
+            obj.KriKitObjNoise = KriKitObjNoise;
+        end
+        %------------------------------------------------------------------
+        function []=setThresholdSolver(obj,ThresholdSolver)
+            if length(ThresholdSolver)>1||~isdouble(ThresholdSolver)
+                error('ThresholdSolver has to be a scalar')
+            end
+            obj.ThresholdSolver = ThresholdSolver;
+        end
+        %------------------------------------------------------------------
+        function []=setDistInput(obj,DistInput)
+            obj.DistInput = DistInput;
+        end
+        
     end
     
 end

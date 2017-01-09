@@ -15,127 +15,38 @@ function EHIV=calcEHIV_2D(paretoPoints,referencePoint,mu,sd)
 % Output:
 % - EHIV ... expected hypervolume improvement
 %
-% This function is inspired by the code of Michael Emmerich and Andre
-% Deutz, LIACS, Leiden University, 2010 
-% Based on the paper:
-% M. Emmerich, A.H. Deutz, J.W. Klinkenberg: The computation of the
-% expected improvement in dominated hypervolume of Pareto front
-% approximations , LIACS TR-4-2008, Leiden University, The Netherlands
-% http://www.liacs.nl/~emmerich/TR-ExI.pdf
+% This function is inspired by the publication of Michael Emmerich et Al:
+%
+% M. Emmerich, K. Yang, A. Deutz, H. Wang, and C. M. Fonseca, “A
+% multicriteria generalization of Bayesian global optimization,” in
+% Advances in Stochastic and Deterministic Global Optimization (P. M.
+% Pardalos, A. Zhigljavsky, and J. Žilinskas, eds.), vol. 107 of Springer
+% Optimization and Its Applications, Springer International Publishing,
+% 2016. In press.
 %
 % Copyright 2014-2015: Lars Freier, Eric von Lieres
 % See the license note at the end of the file.
 
+
+%% New Code Vectorized
+% timeVec = tic;
 % Make sure that only pareto optimal points are provided
 paretoPoints = determineParetoSet_Mex(paretoPoints);
-sortByEachDimension = sort(paretoPoints);
+paretoPointsSort = sortrows(paretoPoints);
+paretoPointsSort = [-inf,referencePoint(2);paretoPointsSort;referencePoint(1),-inf];
+paretoPointsSort = paretoPointsSort(end:-1:1,:);
 
-nSamples=size(paretoPoints,1);
-nObj = size(paretoPoints,2);
-nCellsPriori = (nSamples+1)^nObj;
-nCells = (nSamples+1)*(nSamples+2)/2;
+part1 = (paretoPointsSort(1:end-2,1)-paretoPointsSort(2:end-1,1)).*...
+         gausscdf((paretoPointsSort(2:end-1,1)-mu(1))/(sd(1))).*...
+         gaussEI(mu(2),sd(2),paretoPointsSort(2:end-1,2),paretoPointsSort(2:end-1,2));
+part1 = [part1;0];
 
-% For better clarity: sort every variable with increasing value
-valuesCell = cell(nObj,1);
-for iObj=1:nObj
-    valuesCell{iObj} = sortByEachDimension(:,iObj);
-end
+part2 = (gaussEI(mu(1),sd(1),paretoPointsSort(1:end-1,1),paretoPointsSort(1:end-1,1))-...
+             gaussEI(mu(1),sd(1),paretoPointsSort(1:end-1,1),paretoPointsSort(2:end,1))).*...
+            gaussEI(mu(2),sd(2),paretoPointsSort(2:end,2),paretoPointsSort(2:end,2));
+EHIV = sum(part1+part2);
 
-% Define grid which represent the vertices of eahc considered rectangle
-[i1,i2] = ndgrid(0:nSamples,0:nSamples);
-indexMatrix =[i1(:),i2(:)];
-
-% Samples in the recangle with these lower bounds to not lead to any
-% contribution to the EIHV as anypoint in these areas are dominated by
-% current pareto front
-doNotUse = indexMatrix(:,1)>(nSamples-indexMatrix(:,2)); 
-indexMatrix(doNotUse,:)=[];
-
-% For more clarity, save lower and upper bounds of each reactangle
-Cl_Matrix = zeros(nCells,nObj);
-Cu_Matrix = zeros(nCells,nObj);
-dominateSamplesCell = cell(nSamples-1,nObj);
-
-for iIndex=0:nSamples
-    for iObj=1:nObj
-        if iIndex==0
-            Cl_Matrix(indexMatrix(:,iObj)==0,iObj) = -inf;
-        else
-            Cl_Matrix(indexMatrix(:,iObj)==iIndex,iObj) = valuesCell{iObj}(iIndex);
-        end
-    end
-end
-
-for iIndex=0:nSamples
-    for iObj=1:nObj
-        if iIndex==nSamples
-            Cu_Matrix(indexMatrix(:,iObj)==iIndex,iObj) = referencePoint(iObj);
-        else
-            Cu_Matrix(indexMatrix(:,iObj)==iIndex,iObj) = valuesCell{iObj}(iIndex+1);
-        end
-    end
-end
-
-% Also save values which are dominated by each sample points in each
-% direction
-for iIndex=0:nSamples-1
-    for iObj=1:nObj
-        dominateSamplesCell{iIndex+1,iObj} = paretoPoints(:,iObj)>=valuesCell{iObj}(iIndex+1);
-    end
-end
-
-% Find reference points fmaxMatrix for each considered rectangle
-fmaxMatrix = bsxfun(@times,ones(nCells,nObj),referencePoint);
-for iCell=1:nCells
-    for iObj=1:nObj
-        if iObj==1
-            indexChosenParetoPoint = paretoPoints(:,2)==Cl_Matrix(iCell,2);
-        else
-            indexChosenParetoPoint = paretoPoints(:,1)==Cl_Matrix(iCell,1);
-        end
-        if sum(indexChosenParetoPoint)==0
-            fmaxMatrix(iCell,iObj) = referencePoint(iObj);
-        else
-            fmaxMatrix(iCell,iObj) = min(paretoPoints(indexChosenParetoPoint,iObj));
-        end
-    end
-end
-
-sampleIsDominated = false(nSamples,1);
-sPlus = zeros(nCells,1);
-
-
-for iCell=1:nCells
-        % Identify sample points which are dominated by upper corner of
-        % current cell
-        if indexMatrix(iCell,1)==nSamples||indexMatrix(iCell,2)==nSamples
-            sampleIsDominated = false(nSamples,1);
-        else
-            sampleIsDominated = dominateSamplesCell{indexMatrix(iCell,1)+1,1}&dominateSamplesCell{indexMatrix(iCell,2)+1,2};
-        end
-        
-
-        if sum(sampleIsDominated)==0
-            sPlus(iCell)=0;
-        else
-            sPlus(iCell) = Hypervolume_MEX(paretoPoints(sampleIsDominated,:),fmaxMatrix(iCell,:));
-        end
-end
-
-%Marginal integration 
-Psi = marginalEI(fmaxMatrix,Cu_Matrix,mu,sd) - marginalEI(fmaxMatrix,Cl_Matrix,mu,sd);
-
-%Cumulative Gaussian over length for correction constant
-Cu_Norm = bsxfun(@rdivide,bsxfun(@minus,Cu_Matrix,mu),sd);
-Cl_Norm = bsxfun(@rdivide,bsxfun(@minus,Cl_Matrix,mu),sd);
-
-GaussCDF = gausscdf(Cu_Norm) - gausscdf(Cl_Norm);
-%ExI Kontribution fuer die aktuelle Zelle
-cellEI = prod(Psi,2)-sPlus.*prod(GaussCDF,2);
-
-
-EHIV=sum(sum(cellEI));
-
+% fprintf('EHIV: %g - time: %g\n',EHIV,toc(timeVec))
 % =============================================================================
 %  KriKit - Kriging toolKit
 %  

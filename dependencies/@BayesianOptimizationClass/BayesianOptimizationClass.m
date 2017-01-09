@@ -1,4 +1,4 @@
-classdef BayesianOptimization<AnalyzeKriging
+classdef BayesianOptimizationClass<AnalyzeKriging
 % Copyright 2014-2016: Lars Freier, Eric von Lieres
 % See the license note at the end of the file.
     
@@ -15,13 +15,15 @@ classdef BayesianOptimization<AnalyzeKriging
     properties(GetAccess='protected',SetAccess='protected')
         InequalityConstraintHandle = [];
         InequalityConstraintOutputHandle = [];
+        InequalityConstraintOutputDistribution = [];
         nCutLinks = 0;
         ConsiderOnlyMaxExpectedImprovement = false;
+        DegreeOfOutputContraint = 1;
     end
     
     methods
         %% Constructor
-        function obj = BayesianOptimization()
+        function obj = BayesianOptimizationClass()
         end
         %% Copy Operator for a shallow copy
         % ----------------------------------------------------------------
@@ -45,6 +47,8 @@ classdef BayesianOptimization<AnalyzeKriging
         [probabilityDensity]=MCMCDistributionFctDRAM(obj,varargin)
         % ----------------------------------------------------------------
         [probabilityDensity]=MCMCDistributionFctSlice(obj,varargin)
+        % ----------------------------------------------------------------
+        [modEI]=modExpImprByOutputConstr(obj,varargin) 
         %% Get Functions
         function [nMCMCLinks] = getnMCMCLinks(obj)
             nMCMCLinks = obj.nMCMCLinks;
@@ -62,8 +66,17 @@ classdef BayesianOptimization<AnalyzeKriging
             InequalityConstraintOutputHandle = obj.InequalityConstraintOutputHandle;
         end
         % ----------------------------------------------------------------
+        function [InequalityConstraintOutputDistribution] = getInequalityConstraintOutputDistribution(obj)
+            InequalityConstraintOutputDistribution = obj.InequalityConstraintOutputDistribution;
+        end
+        
+        % ----------------------------------------------------------------
         function [ConsiderOnlyMaxExpectedImprovement] = getConsiderOnlyMaxExpectedImprovement(obj)
             ConsiderOnlyMaxExpectedImprovement = obj.ConsiderOnlyMaxExpectedImprovement;
+        end
+        % ----------------------------------------------------------------
+        function [DegreeOfOutputContraint] = getDegreeOfOutputContraint(obj)
+            DegreeOfOutputContraint = obj.DegreeOfOutputContraint;
         end
         %% Set Functions
         function [] = setnMCMCLinks(obj,nMCMCLinks)
@@ -88,6 +101,14 @@ classdef BayesianOptimization<AnalyzeKriging
                 error('InequalityConstraintHandle has to be a function handle')
             end
         end
+        % ----------------------------------------------------------------
+        function [] = setInequalityConstraintOutputDistribution(obj,InequalityConstraintOutputDistribution)
+            if isa(InequalityConstraintOutputDistribution,'function_handle')
+                obj.InequalityConstraintOutputDistribution = InequalityConstraintOutputDistribution;
+            else
+                error('InequalityConstraintOutputDistribution has to be a function handle')
+            end
+        end
         
         % ----------------------------------------------------------------
         function [] = setnCutLinks(obj,nCutLinks)
@@ -102,6 +123,13 @@ classdef BayesianOptimization<AnalyzeKriging
                 error('ConsiderOnlyMaxExpectedImprovement has to be logical')
             end
             obj.ConsiderOnlyMaxExpectedImprovement = ConsiderOnlyMaxExpectedImprovement;
+        end
+        % ----------------------------------------------------------------
+        function [] = setDegreeOfOutputContraint(obj,DegreeOfOutputContraint)
+            if length(DegreeOfOutputContraint)~=1
+                error('DegreeOfOutputContraint has to be a scalar')
+            end
+            obj.DegreeOfOutputContraint = DegreeOfOutputContraint;
         end
         
     end

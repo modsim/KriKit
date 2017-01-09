@@ -31,7 +31,7 @@ function M=invupdateapp(A,x,y,r)
 %
 
 % Input checks.
-error(nargchk(4,4,nargin))
+% error(nargchk(4,4,nargin))
 [n,m] = size(A);
 if n~=m
     error('A should be square.');

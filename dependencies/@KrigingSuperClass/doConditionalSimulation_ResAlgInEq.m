@@ -12,8 +12,8 @@ function [realizationCurve,ReturnSamplePoints] = doConditionalSimulation_ResAlgI
 % This function uses "Kriging residual algorithm" (see chevalier2015 - Fast
 % update of conditional simulation ensembles):
 % 1. NonConditional Simulation: Generating realizations of a process with
-%    zero mean and in agreement with the Kriging Covarisance matrix
-%    z_noncond(x)~N(0,C(x)) 
+%    kriging mean and in agreement with the Kriging Covarisance matrix
+%    z_noncond(x)~N(m(x),C(x)) 
 % 2. Conditioning on the Data: z_cond(x) = m(x) + r(x)
 %       m(x) ... kriging estimation
 %       r(x) ... residual estimation: r(x) = z_noncond(x) -
@@ -75,15 +75,6 @@ else
     [sampleLocations,nSamplePoints,nRealization] = checkGivenInputRange;
 end
 
-% Save handle to inequality constraint function if given
-if length(varargin)==2
-    inEqConstraint = varargin{2};
-elseif length(varargin)==4
-    inEqConstraint = varargin{4};
-else
-    inEqConstraint = [];
-end
-
 % Normalize Input if necessary
 if obj.NormInput==1
     % Save original data for later
@@ -104,6 +95,7 @@ end
 % Backup in order to return to old state after conditional simulation
 maxSizeOfPredictionsBackup = obj.getMaxSizeOfPredictions;
 UseGPRMatlabBackup = obj.getUseMatlabRegressionGP;
+% HeterogeneousNoiseBackUp = obj.getHeterogeneousNoise;
 obj.setUseMatlabRegressionGP(false)
 
 % Allocate Memory: 
@@ -114,20 +106,27 @@ randomResidual = zeros(nSamplePoints,1);
 
 % Make sure that no permanent parameter changes happens when porogram
 % crashes
-try
+% try
 %% Step 0: Generate normal Kriging estimation at simulation points and save associated kriging weights
 
     % Do predictions in one step
     obj.setMaxSizeOfPredictions(obj.getnExperiments+nSamplePoints)
 
-    % Actual Prediction
+    % Actual Prediction. Do not allow heterogenous noise here as it is not
+    % used for non-conditional simulation
     outputMatrix = obj.prediction(nonNormSampleLocations(:,1:obj.getnInputVar));
     
     % Save results
     krigingWeights = obj.getWeights;
     krigingWeights = krigingWeights(1:obj.getnExperiments,:);
     meanEstimation = outputMatrix(:,1);
-
+    if obj.NormOutput
+        meanEstimation = obj.scale(meanEstimation,...
+                                   min(obj.getOutputData),max(obj.getOutputData),...
+                                   0,1);
+    end
+%     stdEstimation = outputMatrix(:,2); 
+    
     % Intiital evaluation 
     processOld = 0;
 
@@ -145,77 +144,88 @@ try
 
     % Do Actual nonconditional simulation
     if allRealizationPointsAreTheSame
+        
         % Calculated Kriging covariance matrix w.r.t to all simulation
         % points
         columnSamplePoints = 1:1*obj.nInputVar;
         covMatrix = createCovMatrix(sampleLocations(:,columnSamplePoints));
         
-        % Covariance matrix has to be semipositive definite
-        if any(eig(covMatrix)<0)
-            eigBefore = eig(covMatrix);
-            indicesDiag = 1:nRowsColumns+1:nRowsColumns^2;
-            covMatrix(indicesDiag) = covMatrix(indicesDiag)+covMatrix(indicesDiag)*1e-10;
-            eigAfter = eig(covMatrix);
-            warning('covMatrix is not positive semidefinite (smallest eigenvalue is %g). \nAfter adding 1e-10 to diagonal, max Diff in eigenvalues is : %g\n',min(eigBefore),max(abs(eigBefore-eigAfter)))
-        end 
+        indices1 = 1:size(covMatrix,1)+1:size(covMatrix,1)*obj.nExperiments;
+        indices2 = indices1(end) + size(covMatrix,1)+1:size(covMatrix,1)+1:size(covMatrix,1)^2;
+
+        if (isempty(obj.KriKitObjNoise)||isempty(obj.KriKitObjNoise.getOutputData))
+            covMatrix([indices1,indices2]) = covMatrix([indices1,indices2]) + (obj.sigmaError).^2;    
+        else
+            predLogNoise = obj.KriKitObjNoise.prediction(nonNormSampleLocations(:,1:obj.getnInputVar));
+            covMatrix([indices1,indices2]) = bsxfun(@plus,covMatrix([indices1,indices2]), exp(predLogNoise(:,1))' );
+        end
         
         % Random drawing following the distribution ~N(0,covMatrix)
-        unconditionedReal = mvnrnd(zeros(nRealization,obj.getnExperiments+nSamplePoints),covMatrix);
+        % First nDataXnData part of the covMatrix has to contain the data
+        % points covariance matrix, where sigmaError is added to the
+        % diagonal entries (Noisy measurements)
+        [unconditionedReal] = generatedNonconditionalSImulation(covMatrix,nRealization);
     end
 
 %% Step 2: Conditional simulation
-    
-    % Has to be done individual for each realization
-    for iRealization = 1:nRealization
-        
-        % Do nonconditional simulation (Only needed when simulation point
-        % differ between realizations
-        columnSamplePoints = (iRealization-1)*obj.nInputVar+1:iRealization*obj.nInputVar;
-        if ~allRealizationPointsAreTheSame
+    if allRealizationPointsAreTheSame
+        randomResidual = zeros(nSamplePoints,nRealization);
+        randomResidual(:) = unconditionedReal(:,obj.getnExperiments+1:end)'- krigingWeights(:,obj.getnExperiments+1:end)'*unconditionedReal(:,1:obj.getnExperiments)';
+        realizationCurve = bsxfun(@plus,randomResidual,meanEstimation(obj.getnExperiments+1:end));
+    else
+
+        % Has to be done individual for each realization
+        for iRealization = 1:nRealization
+            % Do nonconditional simulation (Only needed when simulation point
+            % differ between realizations
+            columnSamplePoints = (iRealization-1)*obj.nInputVar+1:iRealization*obj.nInputVar;
+            
             % Actual Prediction
             outputMatrix = obj.prediction(nonNormSampleLocations(:,columnSamplePoints));
-            
-            
+
+
             % Save results
             krigingWeights = obj.getWeights;
             krigingWeights = krigingWeights(1:obj.getnExperiments,:);
             meanEstimation = outputMatrix(:,1);
             covMatrix = createCovMatrix(sampleLocations(:,columnSamplePoints));
-            unconditionedReal = mvnrnd(zeros(nRealization,obj.getnExperiments+nSamplePoints),covMatrix);
-        end
-        
-        % Do Conditional simulation constrainted by inEqConstraint
-        realizationFound = false;
-        while ~realizationFound
-            
-            % Calculate estimation modeling error
-            randomResidual(:) = unconditionedReal(iRealization,obj.getnExperiments+1:end)'- krigingWeights(:,obj.getnExperiments+1:end)'*unconditionedReal(iRealization,1:obj.getnExperiments)';
-            
-            % Final calculation of conditional simulation
-            realizationCurve(:,iRealization) = meanEstimation(obj.getnExperiments+1:end) + randomResidual + randn()*obj.sigmaError;
+            if ~isempty(obj.HeterogeneousNoise)
+                covMatrix(1:size(covMatrix,1)+1:size(covMatrix,1)*obj.nExperiments) = covMatrix(1:size(covMatrix,1)+1:size(covMatrix,1)*obj.nExperiments) + (obj.HeterogeneousNoise').^2;
+            else
+                covMatrix(1:size(covMatrix,1)+1:size(covMatrix,1)*obj.nExperiments) = covMatrix(1:size(covMatrix,1)+1:size(covMatrix,1)*obj.nExperiments) + (obj.sigmaError).^2;
+            end
+             
+            [unconditionedReal] = generatedNonconditionalSImulation(covMatrix,nRealization);
 
+            % Do Conditional simulation constrainted by inEqConstraint
+            realizationFound = false;
+            while ~realizationFound
 
-            % Update Process bar if wanted
-            if obj.getShowWaitingBar
-                processNew = iRealization/nRealization;
-                if (processNew-processOld)>0.01
-                    waitbar(processNew,hWaitBar,sprintf('Process For Conditional Simulation: %f',processNew))
-    %                         toc
-                    processOld = processNew;
+                % Calculate estimation modeling error
+                randomResidual(:) = unconditionedReal(iRealization,obj.getnExperiments+1:end)'- krigingWeights(:,obj.getnExperiments+1:end)'*unconditionedReal(iRealization,1:obj.getnExperiments)';
+
+                % Final calculation of conditional simulation
+                realizationCurve(:,iRealization) = meanEstimation(obj.getnExperiments+1:end) + randomResidual;
+
+                % Update Process bar if wanted
+                if obj.getShowWaitingBar
+                    processNew = iRealization/nRealization;
+                    if (processNew-processOld)>0.01
+                        waitbar(processNew,hWaitBar,sprintf('Process For Conditional Simulation: %f',processNew))
+                        processOld = processNew;
+                    end
                 end
             end
-            
-            % Probality of taking a realization ~(number points of violating
-            % conditions)/(total number of simulation points)
-            if ~isempty(inEqConstraint)
-                [unconditionedReal(iRealization,:),realizationFound] = checkIfInEqualityHolds(realizationCurve(:,iRealization),unconditionedReal(iRealization,:));
-            else
-                realizationFound = true;
-            end
+
+
         end
     end
-    
 %% Final things
+    if obj.NormOutput
+        realizationCurve = obj.scale(realizationCurve,0,1,...
+                                   min(obj.getOutputData),max(obj.getOutputData));
+    end
+    
     % Define output
     ReturnSamplePoints = nonNormSampleLocations(obj.nExperiments+1:end,:);
 
@@ -226,29 +236,43 @@ try
 
     obj.setUseMatlabRegressionGP(UseGPRMatlabBackup);
     obj.setMaxSizeOfPredictions(maxSizeOfPredictionsBackup);
-catch ex
-    error(ex.message)
-end
 
 %% Nested Functions 
-function [unconditionedReal,realizationFound] = checkIfInEqualityHolds(realizationCurve,unconditionedReal)
-    % Check if inequalities hold
-    randNumber = rand(1);
-
-    % Probality of taking a realization ~(number points of violating
-    % conditions)/(total number of simulation points)
-%     if randNumber>=(sum(~inEqConstraint(realizationCurve))/nSamplePoints)*(1/2*1/(1-0.9))
-    if randNumber>=(sum(~inEqConstraint(realizationCurve))/nSamplePoints)
-        realizationFound = true;
-    else
+% -------------------------------------------------------------------------
+function [unconditionedReal] = generatedNonconditionalSImulation(covMatrix,nRealization)
+    necessaryFeatures = {'Statistics_Toolbox'};
+    validLincence = cellfun(@(f) license('checkout',f),necessaryFeatures);
+    if validLincence
         try
-            unconditionedReal = mvnrnd(zeros(1,obj.getnExperiments+nSamplePoints),covMatrix);
+            unconditionedReal= mvnrnd(meanEstimation,covMatrix,nRealization);
         catch ex
-            warning(ex.message)
-            unconditionedReal = mvnrnd(zeros(1,obj.getnExperiments+nSamplePoints),covMatrix);
+            warning(ex.message);
+            covMatrix = correctCovMatrix(covMatrix);
+            unconditionedReal= mvnrnd(meanEstimation,covMatrix,nRealization);
         end
-        realizationFound = false;
+    else
+        [eigVector,eigValue]=eig(covMatrix);
+        if any(eigValue<0)
+            covMatrix = correctCovMatrix(covMatrix);
+            [eigVector,eigValue]=eig(covMatrix);
+        end
+        unconditionedReal = randn(nRealization,obj.getnExperiments+nSamplePoints);
+        unconditionedReal = eigVector*sqrt(eigValue)*eigVector'*unconditionedReal';
+        unconditionedReal =  bsxfun(@plus,unconditionedReal,meanEstimation);
+        unconditionedReal = unconditionedReal';
     end
+    
+end
+% -------------------------------------------------------------------------
+function [covMatrix] = correctCovMatrix(covMatrix)
+    % Covariance matrix has to be semipositive definite
+    eigBefore = eig(covMatrix);
+    nRowsColumns = size(covMatrix,1);
+    indicesDiag = 1:nRowsColumns+1:nRowsColumns^2;
+    covMatrix(indicesDiag) = covMatrix(indicesDiag)+covMatrix(indicesDiag)*1e-10;
+%             covMatrix(indicesDiag) = covMatrix(indicesDiag)+min(eigBefore);
+    eigAfter = eig(covMatrix);
+    warning('covMatrix is not positive semidefinite (smallest eigenvalue is %g). \nAfter adding 1e-10 to diagonal, max Diff in eigenvalues is : %g\n',min(eigBefore),max(abs(eigBefore-eigAfter)))
 end
 % -------------------------------------------------------------------------
 function [covMatrix] = createCovMatrix(sampleLocations)

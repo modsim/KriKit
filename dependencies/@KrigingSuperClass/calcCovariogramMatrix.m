@@ -65,7 +65,12 @@ if obj.CovariogramUsesEuclideanDistance
     delta = reshape(delta,sqrt(size(delta,1)),sqrt(size(delta,1)));
 
     % Calculate the variogram values for theses distances
-    obj.Variogram(1:obj.nExperiments,1:obj.nExperiments) =  obj.CovarModel(zeros(1,size(obj.DistInput,2)),1) - obj.CovarModel(delta,0);
+%     if isempty(obj.HeterogeneousNoise)
+        obj.Variogram(1:obj.nExperiments,1:obj.nExperiments) =  obj.CovarModel(zeros(1,size(obj.DistInput,2)),1) - obj.CovarModel(delta,0);
+%     else
+%         obj.Variogram(1:obj.nExperiments,1:obj.nExperiments) =  obj.CovarModel(zeros(1,size(obj.DistInput,2)),0) - obj.CovarModel(delta,0);
+%         obj.Variogram(1:size(obj.Variogram,1)+1:size(obj.Variogram,1)*obj.nExperiments) = obj.HeterogeneousNoise.^2;
+%     end
 elseif obj.CovariogramUsesAbsoluteDistance
     % Calculate the variogram values for the input distances (for
     % each input variable). 
@@ -83,11 +88,23 @@ elseif obj.CovariogramUsesAbsoluteDistance
         end
     end
     delta = reshape(d,nRowsColumns,obj.nInputVar,nRowsColumns);
-    obj.Variogram(1:obj.nExperiments,1:obj.nExperiments) =  reshape(obj.CovarModel(zeros([1,size(obj.DistInput,2),1]),1) - obj.CovarModel(delta,0),nRowsColumns,nRowsColumns);
+    
+%     if isempty(obj.HeterogeneousNoise)
+        obj.Variogram(1:obj.nExperiments,1:obj.nExperiments) =  ...
+            reshape(obj.CovarModel(zeros([1,size(obj.DistInput,2),1]),1) - ...
+                    obj.CovarModel(delta,0),nRowsColumns,nRowsColumns);
+%     else
+%         obj.Variogram(1:obj.nExperiments,1:obj.nExperiments) =  ...
+%             reshape(obj.CovarModel(zeros([1,size(obj.DistInput,2),1]),0) - ...
+%                     obj.CovarModel(delta,0),nRowsColumns,nRowsColumns);
+%         % Add heterogenous noise further below
+%     end
 else
     error('Either"CovariogramUsesEuclideanDistance" or "CovariogramUsesAbsoluteDistance" have to be "true"')
 end
-
+% if ~isempty(obj.HeterogeneousNoise)
+%     obj.Variogram(1:size(obj.Variogram,1)+1:size(obj.Variogram,1)*obj.nExperiments) = obj.HeterogeneousNoise.^2;
+% end
     % Diagonal has to be 0
 obj.Variogram = obj.Variogram - bsxfun(@times,diag(obj.Variogram),eye(size(obj.Variogram,1)));
 
@@ -105,8 +122,28 @@ obj.Variogram(obj.nExperiments+1:obj.nExperiments+obj.nBasisFct,obj.nExperiments
 
 % Convert to CavoriogramMatrix
 obj.CovariogramMatrix = obj.Variogram;
-covariance_zero  = ones(obj.nExperiments,obj.nExperiments)*obj.CovarModel(zeros(1,size(obj.DistInput,2)),1);
-obj.CovariogramMatrix(1:obj.nExperiments,1:obj.nExperiments) = covariance_zero-obj.Variogram(1:obj.nExperiments,1:obj.nExperiments);
+
+
+% if ~isempty(obj.HeterogeneousNoise)
+%     vecIndices = (1:obj.nExperiments)';
+%     vecIndices = (vecIndices-1)*length(obj.CovariogramMatrix)+vecIndices;
+%     
+%     covariance_zero  = ones(obj.nExperiments,obj.nExperiments)*obj.CovarModel(zeros(1,size(obj.DistInput,2)),0);
+%     obj.CovariogramMatrix(1:obj.nExperiments,1:obj.nExperiments) = covariance_zero-obj.Variogram(1:obj.nExperiments,1:obj.nExperiments);
+%     
+%     obj.CovariogramMatrix(vecIndices) = obj.CovariogramMatrix(vecIndices) + obj.HeterogeneousNoise.^2;
+% else
+    covariance_zero  = ones(obj.nExperiments,obj.nExperiments)*obj.CovarModel(zeros(1,size(obj.DistInput,2)),1);
+    obj.CovariogramMatrix(1:obj.nExperiments,1:obj.nExperiments) = covariance_zero-obj.Variogram(1:obj.nExperiments,1:obj.nExperiments);
+% end
+
+if ~isempty(obj.HeterogeneousNoise)
+    vecIndices = (1:obj.nExperiments)';
+    vecIndices = (vecIndices-1)*length(obj.CovariogramMatrix)+vecIndices;
+    
+    obj.Variogram(vecIndices) = obj.HeterogeneousNoise.^2;
+    obj.CovariogramMatrix(vecIndices) = obj.CovarModel(zeros(1,size(obj.DistInput,2)),0) + obj.HeterogeneousNoise.^2;
+end
 
 %% Calculate Inverse if needed
 % If the inverse is used for inv(A)*b instead of A\b

@@ -19,6 +19,15 @@ function [ExpectedImprovement]=calcExpectedImprovement(obj,varargin)
 % For further optional settings and more details about the calculation of
 % expected improvement see "calcExpectedImprovementMainPart()"
 %
+% Note: For more information about how to introduces fuzzy inequality
+% constraints for the output see documentation for
+% "modExpImprByOutputConstr". For fuzzy constraints the probability is
+% calculated that these constraints hold. If fuzzy constraints are
+% available than the modified expected improvement value is a compormise
+% between achieving high improvement and not violating the constraints.
+% This should be prefered for Markov Chain Monte Charlo Design of
+% Experiment instead of hard constraints.
+% 
 % Copyright 2014-2016: Lars Freier, Eric von Lieres
 % See the license note at the end of the file.
 
@@ -54,6 +63,13 @@ end
 % Final Output
 if inputWasTransposed
     ExpectedImprovement = ExpectedImprovement';
+end
+
+% Include Inequality constraint distribution into final expected
+% improvement
+if isprop(obj,'InequalityConstraintOutputDistribution')&&~isempty(obj.getInequalityConstraintOutputDistribution)
+    predictionProto = -obj.MinMax(KrigingObjectIndex)*prediction(:,1);
+    ExpectedImprovement = obj.modExpImprByOutputConstr(ExpectedImprovement,predictionProto,prediction(:,2));
 end
 
 end

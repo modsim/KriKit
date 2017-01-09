@@ -62,6 +62,7 @@ function [quality]=calcCrossOverQuality(obj,varargin)
         % Set the defined model parameters
     obj.setCovariogramModelParameters(varargin{1});
     covariogramBackupMatrix = obj.getCovariogramMatrix;
+    heterogeneousNoiseBackUpt = obj.HeterogeneousNoise;
     UseGPRMatlabBackup = obj.getUseMatlabRegressionGP;
     obj.setUseMatlabRegressionGP(false)
     
@@ -78,102 +79,124 @@ function [quality]=calcCrossOverQuality(obj,varargin)
     % erased and replaced by the mean values at this point
     uniqueInput = unique(obj.getInputData,'rows');
     
-    
-    for iExpOut = 1:size(uniqueInput,1)
-        
-        % Reset input and output data
-        InputData = InputBackup;
-        InputDataNorm = InputBackupNorm;
-        OutputData = OutputBackup;
-        OutputDataNorm = OutputBackupNorm;
-        
-        % Erase all rows and column which are associated with current
-        % data point
-            % Find all Experiments using the same input parameters
-        [~,binVector]=ismember(InputBackup,uniqueInput(iExpOut,:),'rows');
-        indexSameInput = find(binVector==1);
-            % Erase
-        InputData(indexSameInput,:)         = [];
-        InputDataNorm(indexSameInput,:)     = [];
-        OutputData(indexSameInput,:)        = [];
-        OutputDataNorm(indexSameInput,:)    = [];
-            % Replaceoriginal data set
-        setInputData(InputData,InputDataNorm);
-        setOutputData(OutputData,OutputDataNorm);
-        
-        % Update covariance matrix (erase lines which are associated with
-        % erased data set)
-        indicesKeep = setdiff(1:size(covariogramBackupMatrix,1),indexSameInput);
-        covariogramMatrix = covariogramBackupMatrix(indicesKeep,indicesKeep);
-        obj.CovariogramMatrix = covariogramMatrix;
-        
-        % Instead of calculating the inverse each time de novo, the old
-        % inverse is just updated (HAGER, 1989,'UPDATING THE INVERSE OF A
-        % MATRIX*'). Only possible in step for when no multiple
-        % measurements exists at the point of current investigation.
-        if length(indexSameInput)==1
-            obj.InvCovariogramMatrix=invupdatered(inverseBackUP,indexSameInput,indexSameInput);
-        else
-            obj.InvCovariogramMatrix = inv(covariogramMatrix);
+    protoVec = zeros(size(uniqueInput,1),1);
+    predVec = zeros(size(uniqueInput,1),1);
+    try
+        for iExpOut = 1:size(uniqueInput,1)
+
+            % Reset input and output data
+            InputData = InputBackup;
+            InputDataNorm = InputBackupNorm;
+            OutputData = OutputBackup;
+            OutputDataNorm = OutputBackupNorm;
+
+            % Erase all rows and column which are associated with current
+            % data point
+                % Find all Experiments using the same input parameters
+            [~,binVector]=ismember(InputBackup,uniqueInput(iExpOut,:),'rows');
+            indexSameInput = find(binVector==1);
+                % Erase
+            InputData(indexSameInput,:)         = [];
+            InputDataNorm(indexSameInput,:)     = [];
+            OutputData(indexSameInput,:)        = [];
+            OutputDataNorm(indexSameInput,:)    = [];
+                % Replaceoriginal data set
+            setInputData(InputData,InputDataNorm);
+            setOutputData(OutputData,OutputDataNorm);
+
+            % Update covariance matrix (erase lines which are associated with
+            % erased data set)
+            indicesKeep = setdiff(1:size(covariogramBackupMatrix,1),indexSameInput);
+            if ~isempty(obj.HeterogeneousNoise)
+                obj.HeterogeneousNoise = heterogeneousNoiseBackUpt(indicesKeep(1:end-obj.getnBasisFct));
+            end
+            covariogramMatrix = covariogramBackupMatrix(indicesKeep,indicesKeep);
+            obj.CovariogramMatrix = covariogramMatrix;
+            
+            % Instead of calculating the inverse each time de novo, the old
+            % inverse is just updated (HAGER, 1989,'UPDATING THE INVERSE OF A
+            % MATRIX*'). Only possible in step for when no multiple
+            % measurements exists at the point of current investigation.
+            if length(indexSameInput)==1
+                obj.InvCovariogramMatrix=invupdatered(inverseBackUP,indexSameInput,indexSameInput);
+            else
+                obj.InvCovariogramMatrix = inv(covariogramMatrix);
+            end
+
+            % Make the Kriging prediction
+            [output]=obj.prediction(uniqueInput(iExpOut,:));
+            expected = output(:,1);
+            sigma = output(:,2);
+
+            % Compare wiht the true value
+            switch obj.CrossValidationType
+                case {1,3}
+                    proto = ((mean(OutputBackup(indexSameInput))-expected)/sigma)^2;
+
+                    if isnan(proto)
+                        quality = realmax;
+                    else
+                        quality = quality + proto;
+                    end
+                case 2
+                    if isnan(expected)
+                        quality = realmax;
+                    else
+                        quality = quality + (mean(OutputBackup(indexSameInput))-expected)^2;
+                    end
+                case 4
+                    proto = ((mean(OutputBackup(indexSameInput))-expected)/sigma)^2;
+                    protoVec(iExpOut) = proto;
+                    predVec(iExpOut,1) = expected;
+                    predVec(iExpOut,2) = sigma;
+                    
+                    if isnan(proto)
+                        quality = realmax;
+                    else
+                        quality = quality + proto;
+                    end
+                        quality2 = quality2 + (mean(OutputBackup(indexSameInput))-expected)^2;
+                otherwise
+                    error('CrossValidationType: %d is not defined\n',obj.CrossValidationType)
+            end
         end
 
-        % Make the Kriging prediction
-        [output]=obj.prediction(uniqueInput(iExpOut,:));
-        expected = output(:,1);
-        sigma = output(:,2);
-        
-        % Compare wiht the true value
         switch obj.CrossValidationType
-            case {1,3}
-                proto = ((mean(OutputBackup(indexSameInput))-expected)/sigma)^2;
-
-                if isnan(proto)
-                    quality = realmax;
-                else
-                    quality = quality + proto;
-                end
-            case 2
-                if isnan(expected)
-                    quality = realmax;
-                else
-                    quality = quality + (mean(OutputBackup(indexSameInput))-expected)^2;
-                end
+            case 1
+                quality = abs(1-quality/size(uniqueInput,1));
             case 4
-                proto = ((mean(OutputBackup(indexSameInput))-expected)/sigma)^2;
-
-                if isnan(proto)
-                    quality = realmax;
-                else
-                    quality = quality + proto;
-                end
-                    quality2 = quality2 + (mean(OutputBackup(indexSameInput))-expected)^2;
+                quality = abs(1-quality/size(uniqueInput,1));
+        %             quality = quality*quality2;
+                quality = quality+quality2/size(uniqueInput,1)/max(OutputBackup.^2);
             otherwise
-                error('CrossValidationType: %d is not defined\n',obj.CrossValidationType)
+
         end
+    
+        % Restore old values
+        obj.checkVariogram = 0;
+        obj.setInputData(InputBackup);
+        obj.setOutputData(OutputBackup);
+        obj.CovariogramMatrix = covariogramBackupMatrix;
+        obj.InvCovariogramMatrix = inverseBackUP;
+        obj.nExperiments = nExpBackup;
+        obj.UseInverse = UseInverseBackUP;
+        obj.setCovariogramModelParameters(covParaBackup);
+        obj.HeterogeneousNoise = heterogeneousNoiseBackUpt;
+    catch ex
+        warning(ex.message)
+        disp('Hello')
+        % Restore old values
+        obj.checkVariogram = 0;
+        obj.setInputData(InputBackup);
+        obj.setOutputData(OutputBackup);
+        obj.CovariogramMatrix = covariogramBackupMatrix;
+        obj.InvCovariogramMatrix = inverseBackUP;
+        obj.nExperiments = nExpBackup;
+        obj.UseInverse = UseInverseBackUP;
+        obj.setCovariogramModelParameters(covParaBackup);
+        obj.HeterogeneousNoise = heterogeneousNoiseBackUpt;
     end
-    
-    switch obj.CrossValidationType
-        case 1
-            quality = abs(1-quality/size(uniqueInput,1));
-        case 4
-            quality = abs(1-quality/size(uniqueInput,1));
-%             quality = quality*quality2;
-            quality = quality+quality2/size(uniqueInput,1)/max(OutputBackup.^2);
-        otherwise
-                
-    end
-    
-    % Restore old values
-    obj.checkVariogram = 0;
-    obj.setInputData(InputBackup);
-    obj.setOutputData(OutputBackup);
-    obj.CovariogramMatrix = covariogramBackupMatrix;
-    obj.InvCovariogramMatrix = inverseBackUP;
-    obj.nExperiments = nExpBackup;
-    obj.UseInverse = UseInverseBackUP;
-    obj.setCovariogramModelParameters(covParaBackup);
-    obj.setUseMatlabRegressionGP(UseGPRMatlabBackup)
-    
+
     %% Set Functions
     % ---------------------------------------------------------------------
     function [] = setInputData(Input,InputNorm)

@@ -14,7 +14,7 @@ classdef AnalyzeMixture<AnalyzeKriging
     
     %% Private Members
     properties(GetAccess='private',SetAccess='private')
-        
+        PartOfMixture = [];
     end
     
     %% Protected Members
@@ -25,6 +25,7 @@ classdef AnalyzeMixture<AnalyzeKriging
         %% Constructor
         function obj = AnalyzeMixture()
             obj@AnalyzeKriging();
+            
         end
         %% Copy Operator for a shallow copy
         % ----------------------------------------------------------------
@@ -176,6 +177,35 @@ classdef AnalyzeMixture<AnalyzeKriging
         [] = labelPlots_23D(obj,varargin);
         % ----------------------------------------------------------------
         [] = plotInterpolation_23D(obj,varargin)
+        
+        
+        
+        
+        
+        %% Get
+        % ----------------------------------------------------------------
+        function [PartOfMixture] = getPartOfMixture(obj)
+            PartOfMixture = obj.PartOfMixture;
+        end
+        
+        %% Set
+        % ----------------------------------------------------------------
+        function [] = setPartOfMixture(obj,varargin)
+            PartOfMixture = varargin{1};
+            idxObj = varargin{2};
+            if mod(idxObj,1)~=0 || length(idxObj)~=1 || idxObj>obj.getnKrigingObjects
+                error('Second input (idxObj) has to be an integer')
+            end
+            if length(PartOfMixture)~=obj.KrigingObjects{idxObj}.getnInputVar || ...
+                    (size(PartOfMixture,1)*size(PartOfMixture,2))~=obj.KrigingObjects{idxObj}.getnInputVar
+                error('PartOfMixture has to be a vector of 1XninputVar')
+            end
+            if ~islogical(PartOfMixture)
+                error('PartOfMixture must contain only logical entries')
+            end
+            obj.PartOfMixture = PartOfMixture;
+        end
+%         PartOfMixture
     end
     
 end

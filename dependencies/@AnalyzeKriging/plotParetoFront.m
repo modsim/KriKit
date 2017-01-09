@@ -1,5 +1,7 @@
 function [] = plotParetoFront(obj,varargin)
 % [] = plotParetoFront(krigingObjVector,expectedParetoCurve,deviationParetoCurve,pCover,gridOriginal);
+% This function plots the results produced by "predictParetoCurve"
+%
 % Input: 
 % - krigingObjVector(1XnObjectives): contains indices of kriging objects
 % - expectedParetoCurve(nParetoPointsXnObjectives): matrix contains
@@ -44,21 +46,29 @@ function [] = plotParetoFront(obj,varargin)
     gridOriginal = varargin{5};
     
     nObj = length(krigingObjVector);
-    nGridPointsOutput = round(size(gridOriginal,1)^(1/nObj));
+%     nGridPointsOutput = round(size(gridOriginal,1)^(1/nObj));
     
     % Determine Unique Grid
     uniqueGridMatrix = calcUniqueGridMatrix();
 
     % Find Quantiles in order to define the confidence tube
-    [gridToLow,gridToBig]=determinConfidenceBounds;
+    if obj.getShowBounds
+        [gridToLow,gridToBig]=determinConfidenceBounds;
+    end
     
     switch nObj
         case 2
+            levelVec = unique(deviationParetoCurve(deviationParetoCurve>obj.getThresholdQuantile));
+            
             figure()
             hold on
-            contourf(uniqueGridMatrix(:,1),uniqueGridMatrix(:,2),reshape(deviationParetoCurve,nGridPointsOutput,nGridPointsOutput)');
-            hExpected = plot(expectedParetoCurve(:,1),expectedParetoCurve(:,2),'k.','MarkerSize',15);
-            
+            contourf(uniqueGridMatrix{1},...
+                    uniqueGridMatrix{2},...
+                    reshape(deviationParetoCurve,length(uniqueGridMatrix{1}),length(uniqueGridMatrix{2}))',...
+                    levelVec);
+            [expectedParetoCurveXSort,idx] = sort(expectedParetoCurve(:,1));
+            hExpected = plot(expectedParetoCurveXSort,expectedParetoCurve(idx,2),'k-','LineWidth',2);
+
             if obj.getShowBounds
                 % sort in ascend w.r.t to the first objective but descend
                 % order w.r.t to the second objective
@@ -149,14 +159,14 @@ function [] = plotParetoFront(obj,varargin)
 
 %% Nested
     function [uniqueGridMatrix] = calcUniqueGridMatrix()
-        uniqueGridMatrix = zeros(nGridPointsOutput,nObj);
+        uniqueGridMatrix = cell(nObj,1);
         % Bring Data Set in correct order
         for iObjNested=1:nObj
             krigingIndexNested = krigingObjVector(iObjNested);
             if obj.getMinMax(krigingIndexNested)==1
-                uniqueGridMatrix(:,iObjNested)=sort(unique(gridOriginal(1:end,krigingIndexNested)),'ascend');
+                uniqueGridMatrix{iObjNested}=sort(unique(gridOriginal(1:end,krigingIndexNested)),'ascend');
             else
-                uniqueGridMatrix(:,iObjNested)=sort(unique(gridOriginal(1:end,krigingIndexNested)),'descend');
+                uniqueGridMatrix{iObjNested}=sort(unique(gridOriginal(1:end,krigingIndexNested)),'descend');
             end
         end
     end
@@ -170,8 +180,11 @@ function [] = plotParetoFront(obj,varargin)
         
         % Choose all points outside off and at the broder off desired
         % confidence region
-        qToLow = pCover<=quantileValueLB;
-        qToBig = pCover>=quantileValueUB;
+        qToLow = pCover(end:-1:1)<=quantileValueLB;
+        qToBig = pCover(end:-1:1)>=quantileValueUB;
+        if ~any(qToLow)||~any(qToBig)
+            error('No point in the solution space fits the quantile contraints. This can be solved by adjusting number of simulations or by adjusting the outputConstraint for the "predictParetoCurve" function. You can also deactivate "ShowBounds"')
+        end
         
         % Define confidence borders
         gridToLow = determineParetoSet_Mex(bsxfun(@times,gridOriginal(qToLow,:),obj.MinMax(krigingObjVector)));

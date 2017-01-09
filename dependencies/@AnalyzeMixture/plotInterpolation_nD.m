@@ -44,7 +44,7 @@ inputVarIndices = obj.KrigingPrediction_InterpolationnD{KrigingObjectIndex,3};
 % variables
 InputMatrixProto = obj.KrigingPrediction_InterpolationnD{KrigingObjectIndex,4};
 nRows = size(InputMatrixProto,2);
-
+nCol = obj.getnPlots+obj.getShowColorBar;
 %% Actual Plotting
 figure();
 hold on
@@ -53,7 +53,8 @@ hold on
 for iPlots1=1:nRows
     for iPlots2=1:obj.getnPlots
         createContourPlot(iPlots1,iPlots2);
-        set(gca,'PlotBoxAspectRatio',[1,1,1])
+        set(gca,'PlotBoxAspectRatio',[1,1,1],'XTick',[],'YTick',[],'Visible','off')
+        
     end
 end
 
@@ -66,15 +67,19 @@ for iPlots1=1:nRows
 end
 
 % Title
-subplot(nRows,obj.getnPlots+1,ceil(obj.getnPlots/2))
-title(obj.getKrigingObjectNames{KrigingObjectIndex},'FontSize',20)
+subplot(nRows,nCol,ceil(obj.getnPlots/2))
+title(sprintf('%s\n',obj.getKrigingObjectNames{KrigingObjectIndex}),'FontSize',20)
 
 % Colorbar
-subplot(obj.getnPlots,obj.getnPlots+1,obj.getnPlots+1:obj.getnPlots+1:obj.getnPlots*(obj.getnPlots+1))
+
+if obj.getShowColorBar
+    subplot(obj.getnPlots,obj.getnPlots+1,obj.getnPlots+1:obj.getnPlots+1:obj.getnPlots*(obj.getnPlots+1))
+end
 if obj.getNormColors==1
     caxis([minEstimation,maxEstimation])
 end
 if obj.getShowColorBar==1&&obj.getNormColors==1
+    
     colorbar
 end
 
@@ -95,7 +100,7 @@ function [] = createContourPlot(iRow,iPlots2)
     indexSubPlot = (iRow-1)*(obj.getnPlots+1)+iPlots2;
     
     % Plot
-    subplot(nRows,obj.getnPlots+1,indexSubPlot);
+    subplot(nRows,nCol,indexSubPlot);
     hold on
     [uniqueRow,indexRows]=unique(InputMatrix(validIndicesSub,:),'rows');
     ternpcolor(uniqueRow(:,inputVarIndices(iRow,1)),...
@@ -110,7 +115,7 @@ function [] = createContourPlot(iRow,iPlots2)
     else
         stringInputVar = obj.getInputVarNames(KrigingObjectIndex(1));
         xString = sprintf('\n\n\n%s=%g\n',stringInputVar{inputVarIndices(iRow,1)},max(uniqueRow(:,inputVarIndices(iRow,1))) );
-        yString = sprintf('%s=%g',stringInputVar{inputVarIndices(iRow,2)},max(uniqueRow(:,inputVarIndices(iRow,2))) );
+        yString = sprintf('%s=%g\n\n',stringInputVar{inputVarIndices(iRow,2)},max(uniqueRow(:,inputVarIndices(iRow,2))) );
         zString = sprintf('\n\n\n\t\t                       %s=%g\t\t                       ',stringInputVar{inputVarIndices(iRow,3)},max(uniqueRow(:,inputVarIndices(iRow,3))) );
     end
     ternlabel(zString,yString,xString);
@@ -128,7 +133,12 @@ function [] = createContourPlot(iRow,iPlots2)
             plotSamples(Data,iRow,iPlots2)
         end
     end
-
+    
+%     ternpcolor(uniqueRow(:,inputVarIndices(iRow,1)),...
+%                uniqueRow(:,inputVarIndices(iRow,2)),...
+%                uniqueRow(:,inputVarIndices(iRow,3)),...
+%                 Estimation(validIndicesSub(indexRows)))
+    
 end
 % -------------------------------------------------------------
 function []=plotSamples(Data,iRow,iPlots2)
@@ -160,12 +170,14 @@ function []=plotSamples(Data,iRow,iPlots2)
             Data(r,obj.KrigingPrediction_InterpolationnD{KrigingObjectIndex,3}(iRow,2)),...
             Data(r,obj.KrigingPrediction_InterpolationnD{KrigingObjectIndex,3}(iRow,3)),...
             'ko','MarkerFaceColor',[255/255 102/255 0/255]);
+    lineObj = findobj(gca,'type','line');
+    lineObj.ZData=(ones(1,size(lineObj.XData,2))*max(Estimation));
 end
 % -------------------------------------------------------------
 function []=labelPlotxAxis(iRow,iPlots2)
 %     subplot(obj.getnPlots,obj.getnPlots+1,(obj.getnPlots-1)*(obj.getnPlots+1)+iPlots1)
     indexSubPlot = (iRow-1)*(obj.getnPlots+1)+iPlots2;
-    subplot(nRows,obj.getnPlots+1,indexSubPlot)
+    subplot(nRows,nCol,indexSubPlot)
     
     % Use default names of input variables when user did not provide any
     if isempty(obj.getInputVarNames(KrigingObjectIndex))

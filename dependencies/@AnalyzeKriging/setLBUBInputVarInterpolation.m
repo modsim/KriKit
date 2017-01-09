@@ -11,6 +11,11 @@ function []=setLBUBInputVarInterpolation(obj,KrigingObjectIndex,LBUBInputVarInte
 % Copyright 2014-2016: Lars Freier, Eric von Lieres
 % See the license note at the end of the file.
     
+    % Check Input
+    if length(KrigingObjectIndex)~=1||KrigingObjectIndex<1||KrigingObjectIndex>obj.getnKrigingObjects
+        error('KrigingObjectIndex must be a scalar between 1 and %i',obj.getnKrigingObjects)
+    end
+    
     % A row vector is needed
     if size(LBUBInputVarInterpolation,1)==obj.KrigingObjects{KrigingObjectIndex}.getnInputVar&&size(LBUBInputVarInterpolation,2)==1
         LBUBInputVarInterpolation = LBUBInputVarInterpolation';
@@ -20,17 +25,17 @@ function []=setLBUBInputVarInterpolation(obj,KrigingObjectIndex,LBUBInputVarInte
         error('LB/UBInputVarInterpolation has to be of dimension 1x%i',obj.KrigingObjects{KrigingObjectIndex}.getnInputVar)
     end
 
-    % Check Input
-    if length(KrigingObjectIndex)~=1||KrigingObjectIndex<1||KrigingObjectIndex>obj.getnKrigingObjects
-        error('KrigingObjectIndex must be a scalar between 1 and %i',obj.getnKrigingObjects)
-    end
+    
 
     switch LBorUB
         case -1
             obj.LBInputVarInterpolation{KrigingObjectIndex} = LBUBInputVarInterpolation;
         case 1
-            if sum(obj.LBInputVarInterpolation{KrigingObjectIndex}>=LBUBInputVarInterpolation)>=1
-                error('One of the upper bounds is smaller or equal to the associated lower bound. Please define the lower bound first')
+            if any(obj.LBInputVarInterpolation{KrigingObjectIndex}>LBUBInputVarInterpolation)
+                error('One of the upper bounds is smaller than the associated lower bound. Please define the lower bound first')
+            end
+            if all(obj.LBInputVarInterpolation{KrigingObjectIndex}==LBUBInputVarInterpolation)
+                error('All upper bounds is smaller or equal to the associated lower bound. Please define the lower bound first')
             end
             obj.UBInputVarInterpolation{KrigingObjectIndex} = LBUBInputVarInterpolation;
         otherwise

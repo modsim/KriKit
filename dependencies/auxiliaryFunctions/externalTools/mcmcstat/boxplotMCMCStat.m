@@ -1,4 +1,4 @@
-function h=boxplot(y,names,outliers)
+function h=boxplotMCMCStat(y,names,outliers)
 %BOXPLOT Draws a boxplot
 % boxplot(y)  - draws boxplots for the columns of y
 

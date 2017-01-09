@@ -140,16 +140,20 @@ for iRow = 1:nRows
             nUnique = size(uniqueRows,1);
             iIndex = 0;
             for iUnique = 1:nUnique
-                concVec = linspace(0,1-sum(uniqueRows(iUnique,:),2),obj.getAccuracy);
+                concVec = linspace(0,1-sum(uniqueRows(iUnique,obj.PartOfMixture),2),obj.getAccuracy);
                 for iAccuary=1:obj.getAccuracy
-                    InputMatrix(iIndex+(iAccuary-1)*obj.getAccuracy^(nInputVarConti-1-iComponent)+startIndex + 1:iIndex+(iAccuary)*obj.getAccuracy^(nInputVarConti-1-iComponent)+startIndex,inputVarIndices(iComponent)) = concVec(iAccuary);
+                    InputMatrix(iIndex+(iAccuary-1)*obj.getAccuracy^(nInputVarConti-1-iComponent)+startIndex + 1:iIndex+(iAccuary)*obj.getAccuracy^(nInputVarConti-1-iComponent)+startIndex,inputVarIndices(iComponent)) = ...
+                        concVec(iAccuary);
                 end
                 iIndex = iIndex+obj.getAccuracy^(iComponent-1);
             end
         end
         
         % Use definition of mixtrue: Sum of input variables has to be 100%
-        remainintVar = setdiff(1:obj.KrigingObjects{KrigingObjectIndex}.getnInputVar,inputVarIndices(3));
+        
+        idxAll = 1:obj.KrigingObjects{KrigingObjectIndex}.getnInputVar;
+        idxDoNotMod = [inputVarIndices(3),idxAll(~obj.PartOfMixture)];
+        remainintVar = setdiff(1:obj.KrigingObjects{KrigingObjectIndex}.getnInputVar,idxDoNotMod);
         InputMatrix(startIndex+1:endIndex,inputVarIndices(3)) = 1- sum(InputMatrix(startIndex+1:endIndex,remainintVar),2);
 
         threshold = [1-1e-10,1+1e-10];

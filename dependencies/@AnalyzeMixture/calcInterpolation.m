@@ -47,7 +47,7 @@ for iComponent = 1:2
     nUnique = size(uniqueRows,1);
     iIndex = 0;
     for iUnique = 1:nUnique
-        concVec = linspace(0,1-sum(uniqueRows(iUnique,:),2),obj.getAccuracy);
+        concVec = linspace(0,1-sum(uniqueRows(iUnique,obj.PartOfMixture),2),obj.getAccuracy);
         for iAccuary=1:obj.getAccuracy
             indexStart = iIndex+(iAccuary-1)*obj.getAccuracy^(2-iComponent) + 1;
             indexEnd = iIndex+(iAccuary)*obj.getAccuracy^(2-iComponent);
@@ -56,9 +56,12 @@ for iComponent = 1:2
         iIndex = iIndex+obj.getAccuracy^(iComponent-1);
     end
 end
+% Input = createNDGRID([0,0],[1,1],obj.getAccuracy);
 
 % Use definition of mixtrue: Sum of input variables has to be 100%
-indicesOthers = setdiff(1:obj.KrigingObjects{KrigingObjectIndex}.getnInputVar,inputVarIndices(3));
+idxAll = 1:obj.KrigingObjects{KrigingObjectIndex}.getnInputVar;
+idxDoNotMod = [inputVarIndices(3),idxAll(~obj.PartOfMixture)];
+indicesOthers = setdiff(1:obj.KrigingObjects{KrigingObjectIndex}.getnInputVar,idxDoNotMod);
 Input(:,inputVarIndices(3)) = 1- sum(Input(:,indicesOthers),2);
 Input = unique(Input,'rows');
 

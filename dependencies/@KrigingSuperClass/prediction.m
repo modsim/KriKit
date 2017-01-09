@@ -53,7 +53,7 @@ function [OutputTotal] = prediction(obj,input)
     
     %% Prediction GPR
     % If MathWorks Gaussian Process Regression function is used
-    if obj.UseMatlabRegressionGP
+    if obj.UseMatlabRegressionGP&&(isempty(obj.KriKitObjNoise)||isempty(obj.KriKitObjNoise.getOutputData))
         if obj.NormInput==1
             for iInput = 1:obj.nInputVar
                 input(:,iInput) = obj.scale(input(:,iInput), min(obj.InputData_True(:,iInput)),max(obj.InputData_True(:,iInput)),0,1);
@@ -63,10 +63,16 @@ function [OutputTotal] = prediction(obj,input)
         OutputTotal = [prediction,sigmaEstimation];
         
         if obj.NormOutput
+            % Scale = (x-minOld)*((maxNew-minNew)/(maxOld-minOld)) + minNew
+            %       = (x-a)*b + c
+            % -> x~N((y-a)*b+c,sigma^2*b^2)
             OutputTotal(:,1) = obj.scale(OutputTotal(:,1),0,1,...
                            min(obj.getOutputData),max(obj.getOutputData));
+            b = (max(obj.getOutputData)-min(obj.getOutputData))/(1-0);
+            OutputTotal(:,2) = OutputTotal(:,2)*b;
             % Do not scale standard deviation as for the calculation no
             % normalized output values are used!!!!!!!!!!!!!!!!!!
+            % f=(x-minX)./(maxX-minX).*(UB-LB)+LB;
         end
         
         return
@@ -164,12 +170,24 @@ function [OutputTotal] = prediction(obj,input)
     % composite design) 
 %     obj.CovargramVectors = CovVecTot;
     
+%     if obj.NormOutput
+%         % Normalization a = b*(max(out)-min(out))/(1-0) + min(out)
+%         OutputTotal(:,1) = obj.scale(OutputTotal(:,1),0,1,...
+%                        min(obj.getOutputData),max(obj.getOutputData));
+%         % Do not scale standard deviation as for the calculation no
+%         % normalized output values are used!!!!!!!!!!!!!!!!!!
+%     end
     if obj.NormOutput
-        % Normalization a = b*(max(out)-min(out))/(1-0) + min(out)
+        % Scale = (x-minOld)*((maxNew-minNew)/(maxOld-minOld)) + minNew
+        %       = (x-a)*b + c
+        % -> x~N((y-a)*b+c,sigma^2*b^2)
         OutputTotal(:,1) = obj.scale(OutputTotal(:,1),0,1,...
                        min(obj.getOutputData),max(obj.getOutputData));
+        b = (max(obj.getOutputData)-min(obj.getOutputData))/(1-0);
+        OutputTotal(:,2) = OutputTotal(:,2)*b;
         % Do not scale standard deviation as for the calculation no
         % normalized output values are used!!!!!!!!!!!!!!!!!!
+        % f=(x-minX)./(maxX-minX).*(UB-LB)+LB;
     end
 
 %% --------------------- Nested Functions ---------------------------------
@@ -304,7 +322,8 @@ function [OutputTotal] = prediction(obj,input)
         % Higher correlation coefficient when you consider exact the same
         % sample point -> usually higher covariance expressed by
         % obj.sigmaError
-        covariance_zero  = ones(size(obj.CovargramVectors,2),size(krigingWeights,2))*obj.CovarModel(zeros(1,size(obj.DistInput,2)),1);
+%         covariance_zero  = ones(size(obj.CovargramVectors,2),size(krigingWeights,2))*obj.CovarModel(zeros(1,size(obj.DistInput,2)),1);
+        covariance_zero  = ones(size(obj.CovargramVectors,2),size(krigingWeights,2))*obj.CovarModel(zeros(1,size(obj.DistInput,2)),0);
         
         % This formula is derive based on the derivatives Lagrange
         % Multiplier function with respect to the lagrange multiplier and
@@ -316,9 +335,27 @@ function [OutputTotal] = prediction(obj,input)
         % 1. 
 %         sigmaEstimation = covariance_zero-krigingWeights'*obj.CovargramVectors(1:size(krigingWeights,1),:);
         % 2.
+%         sigmaEstimation = obj.BasisFctCoefficients'basisFctEval +
+%                           obj.CovargramVectors(1:obj.nExperiments,:)'*...
+%                           inv(obj.CovariogramMatrix(1:obj.nExperiments,1:obj.nExperiments))*...
+%                           (obj.OutputData-obj.BasisFctCoefficients'basisFctEval)
+        % 3.
+        if isempty(obj.KriKitObjNoise)||isempty(obj.KriKitObjNoise.getOutputData) % Check if an initialized noise model exist
+            covariance_zero = covariance_zero + obj.sigmaError^2;
+        else
+%             errorProp = (sum(bsxfun(@times,obj.HeterogeneousNoise.^2,krigingWeights(1:obj.getnExperiments,:).^2)));
+%             errorProp = (sum(bsxfun(@times,obj.HeterogeneousNoise.^2,krigingWeights(1:obj.getnExperiments,:))));
+%             covariance_zero = bsxfun(@plus,covariance_zero,errorProp);
+            predLogNoise = obj.KriKitObjNoise.prediction(nonNormInput(:,:));
+            
+%             covariance_zero = covariance_zero + exp(predLogNoise(:,1));
+%             covariance_zero = bsxfun(@plus,covariance_zero, exp(predLogNoise(:,1)).*(max(obj.getOutputData)-min(obj.getOutputData)).^2 );
+            covariance_zero = bsxfun(@plus,covariance_zero, exp(predLogNoise(:,1)) );
+        end
+        
         sigmaEstimation = covariance_zero - 2*krigingWeights'*obj.CovargramVectors(1:size(krigingWeights,1),:) +...
-                          krigingWeights'*obj.CovariogramMatrix(1:size(krigingWeights,1),1:size(krigingWeights,1))*krigingWeights;
-
+                              krigingWeights'*obj.CovariogramMatrix(1:size(krigingWeights,1),1:size(krigingWeights,1))*krigingWeights;
+        
         % Only the diagonal are the number we are looking for
         sigmaEstimation = diag(sigmaEstimation);
         sigmaEstimation = (sigmaEstimation).^(1/2);

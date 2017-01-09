@@ -106,9 +106,11 @@ function [KrigingObjectIndex,InputVar1,InputVar2,RemainingIndices,RemainingValue
         RemainingIndices = varargin{3};
         RemainingValues = varargin{4};
         if length(unique([varargin{2},RemainingIndices]))~=nInputData
+            errorCheck();
             error('Entries in "[InputVar1,InputVar2]" and "RemainingIndices" must be unique')
         end
         if (size(RemainingValues,1)*size(RemainingValues,2))~=nInputData-(dimensionInterpolation-1)
+            errorCheck();
             error('RemainingValues must be a vector with length %i',nInputData-(dimensionInterpolation-1))
         end
 

@@ -28,13 +28,18 @@ estimateBasisFctCoefficients(obj)
 C = obj.CovariogramMatrix(1:obj.nExperiments,1:obj.nExperiments);
 detC = det(C);
 numericalLimit = realmin;
-if detC<=numericalLimit
+% if detC<=numericalLimit
+if isinf(detC)||detC==0
     detC = numericalLimit;
 end
+
+lC = lu(C);
+
 [basisFctMatrix] = estimatedBasisFunction();
 basisFctEval = basisFctMatrix'*obj.getBasisFctCoefficients;
 vecForMulti = (obj.OutputData-basisFctEval);
 negLog = -(-1/2*vecForMulti'*(C\vecForMulti) - 1/2*log(detC)-obj.nExperiments/2*log(2*pi));
+% negLog = -(-1/2*vecForMulti'*(C\vecForMulti) - sqrt(obj.nExperiments)*log(min(abs(diag(lC))))-obj.nExperiments/2*log(2*pi));
 
 %% Nested Function
 % -------------------------------------------------------------------------

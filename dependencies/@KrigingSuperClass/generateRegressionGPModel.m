@@ -45,7 +45,7 @@ end
 models = {'squaredExpWithoutNugget','squaredExponential','squaredExponentialComplex','ardsquaredexponential','matern32','ardmatern32','matern52','ardmatern52'};
 
 % sUse Data As they are
-obj.GPR_Model = fitrgp(obj.InputData,obj.OutputData,'KernelFunction',models{obj.getCovariogramModelChoice},'BasisFunction',typeGPR_BasisFct);
+obj.GPR_Model = fitrgp(obj.InputData,obj.OutputData,'KernelFunction',models{obj.getCovariogramModelChoice},'BasisFunction',typeGPR_BasisFct,'PredictMethod','exact');
 
 p = obj.GPR_Model.KernelInformation.KernelParameters;
 sigma = obj.GPR_Model.Sigma;

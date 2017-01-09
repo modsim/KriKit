@@ -36,7 +36,8 @@ classdef TaylorKriging<KrigingSuperClass
         % Determine the threshold in the auxiliary condition of
         % sum(Cinv(i,:).^2)>=ThresholdCondition
         ThresholdCondition = 0;
-        
+        %
+        nMultiStartPoints = 10;
         
         InvCoVar = [];
         
@@ -67,7 +68,10 @@ classdef TaylorKriging<KrigingSuperClass
 
         %% ParameterEstimation
 %         [] = estimateBasisFunctionParametersViaKriging(obj)
+        % -----------------------------------------------------------------
         [] = estimateBasisFctParametersViaTaylorKriging(obj)
+        % -----------------------------------------------------------------
+        [varargout] = estimateBasisFctParametersFsolve(obj)
         % -----------------------------------------------------------------
         [] = estimateBasisFctParametersFminCon(obj)
         % -----------------------------------------------------------------
@@ -209,6 +213,10 @@ classdef TaylorKriging<KrigingSuperClass
         % -----------------------------------------------------------------
         function []=setSaveItermediateResults(obj,SaveItermediateResults)
             obj.SaveItermediateResults = SaveItermediateResults;
+        end
+        % -----------------------------------------------------------------
+        function []=setInvCoVar(obj,InvCoVar)
+            obj.InvCoVar = InvCoVar;
         end
         % -----------------------------------------------------------------
         function []=setTaylorExpansionOrder(obj,TaylorExpansionOrder)
