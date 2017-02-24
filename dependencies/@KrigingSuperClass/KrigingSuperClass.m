@@ -415,14 +415,14 @@ classdef KrigingSuperClass<handle
             % This function gives out the parameters of the model which is
             % used for the covariance
             % CovariogramModelChoice 1: parameters=[theta,sigma] covariance = obj.sigma^2*exp(-1/2*distance.^2/obj.theta^2)
-            % CovariogramModelChoice 2: parameters=[theta,sigma,sigmaError] covariance =sigmaError + obj.sigma^2*exp(-1/2*distance.^2/obj.theta^2);
-            % CovariogramModelChoice 3: parameters=[theta,p,sigma,sigmaError] covariance = sigmaError + obj.sigma^2*exp(-1/2*sum(distance^obj.p),obj.theta.^2)));
-            % CovariogramModelChoice 4: parameters=[theta,sigma,sigmaError] covariance = sigmaError + obj.sigma^2*exp(-1/2*sum(distance^2),obj.theta.^2)));
-            % CovariogramModelChoice 5: parameters=[theta,sigma,sigmaError] covariance = sigmaError + obj.sigma^2*(1 + sqrt(3)*weightedEuclidean).*exp((-sqrt(3)*weightedEuclidean)), 
+            % CovariogramModelChoice 2: parameters=[theta,sigma,sigmaError] covariance =sigmaError^2 + obj.sigma^2*exp(-1/2*distance.^2/obj.theta^2);
+            % CovariogramModelChoice 3: parameters=[theta,p,sigma,sigmaError] covariance = sigmaError^2 + obj.sigma^2*exp(-1/2*sum(distance^obj.p),obj.theta.^2)));
+            % CovariogramModelChoice 4: parameters=[theta,sigma,sigmaError] covariance = sigmaError^2 + obj.sigma^2*exp(-1/2*sum(distance^2),obj.theta.^2)));
+            % CovariogramModelChoice 5: parameters=[theta,sigma,sigmaError] covariance = sigmaError^2 + obj.sigma^2*(1 + sqrt(3)*weightedEuclidean).*exp((-sqrt(3)*weightedEuclidean)), 
             %                           weightedEuclidean=sqrt(distance.^2/obj.theta^2);
             % CovariogramModelChoice 6: as  CovariogramModelChoice 5 but with
             %                           weightecalcInterpolation_3DdEuclidean = sqrt(sum(distance^2/obj.theta.^2))));
-            % CovariogramModelChoice 7: covariance = sigmaError + obj.sigma^2*(1 + sqrt(5)*weightedEuclidean+5/3*weightedEuclidean.^2).*exp((- sqrt(5)*weightedEuclidean));
+            % CovariogramModelChoice 7: covariance = sigmaError^2 + obj.sigma^2*(1 + sqrt(5)*weightedEuclidean+5/3*weightedEuclidean.^2).*exp((- sqrt(5)*weightedEuclidean));
             %                           weightedEuclidean=sqrt(distance.^2/obj.theta^2);
             % CovariogramModelChoice 8: as  CovariogramModelChoice 7 but with
             %                           weightedEuclidean = sqrt(sum(distance^2/obj.theta.^2))));
@@ -471,14 +471,14 @@ classdef KrigingSuperClass<handle
         %------------------------------------------------------------------
         function [LowerBound] = getLBCovariogramModelParameters(obj)
             % CovariogramModelChoice 1: parameters=[theta,sigma] covariance = obj.sigma^2*exp(-1/2*distance.^2/obj.theta^2)
-            % CovariogramModelChoice 2: parameters=[theta,sigma,sigmaError] covariance =sigmaError + obj.sigma^2*exp(-1/2*distance.^2/obj.theta^2);
-            % CovariogramModelChoice 3: parameters=[theta,p,sigma,sigmaError] covariance = sigmaError + obj.sigma^2*exp(-1/2*sum(distance^obj.p),obj.theta.^2)));
-            % CovariogramModelChoice 4: parameters=[theta,sigma,sigmaError] covariance = sigmaError + obj.sigma^2*exp(-1/2*sum(distance^2),obj.theta.^2)));
-            % CovariogramModelChoice 5: parameters=[theta,sigma,sigmaError] covariance = sigmaError + obj.sigma^2*(1 + sqrt(3)*weightedEuclidean).*exp((-sqrt(3)*weightedEuclidean)), 
+            % CovariogramModelChoice 2: parameters=[theta,sigma,sigmaError] covariance =sigmaError^2 + obj.sigma^2*exp(-1/2*distance.^2/obj.theta^2);
+            % CovariogramModelChoice 3: parameters=[theta,p,sigma,sigmaError] covariance = sigmaError^2 + obj.sigma^2*exp(-1/2*sum(distance^obj.p),obj.theta.^2)));
+            % CovariogramModelChoice 4: parameters=[theta,sigma,sigmaError] covariance = sigmaError^2 + obj.sigma^2*exp(-1/2*sum(distance^2),obj.theta.^2)));
+            % CovariogramModelChoice 5: parameters=[theta,sigma,sigmaError] covariance = sigmaError^2 + obj.sigma^2*(1 + sqrt(3)*weightedEuclidean).*exp((-sqrt(3)*weightedEuclidean)), 
             %                           weightedEuclidean=sqrt(distance.^2/obj.theta^2);
             % CovariogramModelChoice 6: as  CovariogramModelChoice 5 but with
             %                           weightedEuclidean = sqrt(sum(distance^2/obj.theta.^2))));
-            % CovariogramModelChoice 7: covariance = sigmaError + obj.sigma^2*(1 + sqrt(5)*weightedEuclidean+5/3*weightedEuclidean.^2).*exp((- sqrt(5)*weightedEuclidean));
+            % CovariogramModelChoice 7: covariance = sigmaError^2 + obj.sigma^2*(1 + sqrt(5)*weightedEuclidean+5/3*weightedEuclidean.^2).*exp((- sqrt(5)*weightedEuclidean));
             %                           weightedEuclidean=sqrt(distance.^2/obj.theta^2);
             % CovariogramModelChoice 8: as  CovariogramModelChoice 7 but with
             %                           weightedEuclidean = sqrt(sum(distance^2/obj.theta.^2))));

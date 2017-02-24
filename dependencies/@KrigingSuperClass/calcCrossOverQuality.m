@@ -81,6 +81,7 @@ function [quality]=calcCrossOverQuality(obj,varargin)
     
     protoVec = zeros(size(uniqueInput,1),1);
     predVec = zeros(size(uniqueInput,1),1);
+    qualityVec  = zeros(size(uniqueInput,1),1);
     try
         for iExpOut = 1:size(uniqueInput,1)
 
@@ -144,6 +145,7 @@ function [quality]=calcCrossOverQuality(obj,varargin)
                     else
                         quality = quality + (mean(OutputBackup(indexSameInput))-expected)^2;
                     end
+                    qualityVec(iExpOut) = (mean(OutputBackup(indexSameInput))-expected)^2;
                 case 4
                     proto = ((mean(OutputBackup(indexSameInput))-expected)/sigma)^2;
                     protoVec(iExpOut) = proto;

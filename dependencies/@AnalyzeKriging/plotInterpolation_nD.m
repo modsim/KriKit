@@ -94,9 +94,9 @@ switch Objective
         case 'KrigingInterpolation'
             title(obj.getKrigingObjectNames{KrigingObjectIndex},'FontSize',20)
         case 'ExpectedImprovement'
-            title(sprintf('Exp. Improvement: %s',obj.getKrigingObjectNames{KrigingObjectIndex}),'FontSize',20)
+            title(sprintf('Exp. Improvement: %s',obj.getKrigingObjectNames{KrigingObjectIndex}{1}),'FontSize',20)
     	case 'Optimum'
-            title(sprintf('Plateau Plot: %s',obj.getKrigingObjectNames{KrigingObjectIndex}),'FontSize',20)
+            title(sprintf('Plateau Plot: %s',obj.getKrigingObjectNames{KrigingObjectIndex}{1}),'FontSize',20)
         otherwise
             error('Unknown plotting objective')
 end

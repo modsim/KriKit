@@ -979,8 +979,13 @@ classdef AnalyzeKriging<handle
         end
         % -----------------------------------------------------------------
         function [] = setColormapToolbox(obj,varargin)
-            % Set color map. if "ColormapToolbox" is empty, default
-            % colormap is created
+            % Set color map. 
+            % 
+            % Possible Input:
+            % - 'ColormapToolbox' is empty, default colormap is created.
+            % - 'FZJ' is chosen, a blue colormap is used
+            % - nColorX3 matrix. For more information see matlab
+            %   documentrary "colormap"
             
             % Check input
             if isempty(varargin)||isempty(varargin{1})

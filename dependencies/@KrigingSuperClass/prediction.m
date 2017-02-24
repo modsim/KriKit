@@ -185,9 +185,6 @@ function [OutputTotal] = prediction(obj,input)
                        min(obj.getOutputData),max(obj.getOutputData));
         b = (max(obj.getOutputData)-min(obj.getOutputData))/(1-0);
         OutputTotal(:,2) = OutputTotal(:,2)*b;
-        % Do not scale standard deviation as for the calculation no
-        % normalized output values are used!!!!!!!!!!!!!!!!!!
-        % f=(x-minX)./(maxX-minX).*(UB-LB)+LB;
     end
 
 %% --------------------- Nested Functions ---------------------------------
@@ -335,21 +332,14 @@ function [OutputTotal] = prediction(obj,input)
         % 1. 
 %         sigmaEstimation = covariance_zero-krigingWeights'*obj.CovargramVectors(1:size(krigingWeights,1),:);
         % 2.
-%         sigmaEstimation = obj.BasisFctCoefficients'basisFctEval +
-%                           obj.CovargramVectors(1:obj.nExperiments,:)'*...
-%                           inv(obj.CovariogramMatrix(1:obj.nExperiments,1:obj.nExperiments))*...
-%                           (obj.OutputData-obj.BasisFctCoefficients'basisFctEval)
-        % 3.
+%         sigmaEstimation = covariance_zero - 
+%                           - 2*krigingWeights'*obj.CovargramVectors(1:size(krigingWeights,1),:)
+%                           + krigingWeights'*obj.CovariogramMatrix(1:size(krigingWeights,1),1:size(krigingWeights,1))*krigingWeights
+
         if isempty(obj.KriKitObjNoise)||isempty(obj.KriKitObjNoise.getOutputData) % Check if an initialized noise model exist
             covariance_zero = covariance_zero + obj.sigmaError^2;
         else
-%             errorProp = (sum(bsxfun(@times,obj.HeterogeneousNoise.^2,krigingWeights(1:obj.getnExperiments,:).^2)));
-%             errorProp = (sum(bsxfun(@times,obj.HeterogeneousNoise.^2,krigingWeights(1:obj.getnExperiments,:))));
-%             covariance_zero = bsxfun(@plus,covariance_zero,errorProp);
             predLogNoise = obj.KriKitObjNoise.prediction(nonNormInput(:,:));
-            
-%             covariance_zero = covariance_zero + exp(predLogNoise(:,1));
-%             covariance_zero = bsxfun(@plus,covariance_zero, exp(predLogNoise(:,1)).*(max(obj.getOutputData)-min(obj.getOutputData)).^2 );
             covariance_zero = bsxfun(@plus,covariance_zero, exp(predLogNoise(:,1)) );
         end
         
