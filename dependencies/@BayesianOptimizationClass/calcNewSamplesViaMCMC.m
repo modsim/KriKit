@@ -1,5 +1,5 @@
 function [newSamplePoints] = calcNewSamplesViaMCMC(obj,varargin)
-% [newSamplePoints] = calcNewSamplesViaMCMC(krigingObjectIndices,algorithm)
+% [newSamplePoints] = calcNewSamplesViaMCMC(krigingObjectIndices,algorithm,objective)
 %
 % New Samples are determined following a distribution based on the expected
 % improvement of the approximated Gaussian Process Regression (Kriging)
@@ -19,12 +19,18 @@ function [newSamplePoints] = calcNewSamplesViaMCMC(obj,varargin)
 %                            objectives of interest (1XnObjectives)
 % - algorithm ... string describing the appleed MCMC approach ('DRAM' or
 %                 'Slice') 
+% - objective ... Decided if the MCMC approach should be applied on either  
+%                 'EI' (Expected Improvement) or 'Prediction' (Kriging
+%                 model prediction). 
 % 
 % You can set:
 % - nMCMCLinks ... number of links calculate for the Markov chain
 % - nNewSamples ... number of samples randomly drawn from the chain
 % - nCutLinks ... number of samples cutted from the beginning of the
 %                 calculated Markov chain before samples are drawn
+% - ConsiderOnlyMaxExpectedImprovement ... If true, only best sample point
+%                 is taken inot account. Otherwise, a the new sample point
+%                 is chpose randomly following the output landscape
 %  
 %  You can get: -
 %
@@ -48,7 +54,7 @@ firstKrigingIndex = krigingObjIndexVec(1);
 nInputVar = obj.KrigingObjects{firstKrigingIndex}.getnInputVar;
 defineBoundOfInputVar(obj,krigingObjIndexVec);
 
-if length(varargin)>=2
+if length(varargin)>=2&&~isempty(varargin{2})
     MCMCAlgorithm = varargin{2};
     switch MCMCAlgorithm 
         case 'DRAM'
@@ -60,6 +66,11 @@ else
     MCMCAlgorithm = 'DRAM';
 end
 
+if length(varargin)>=3&&~isempty(varargin{3})
+    objective = varargin{3};
+else
+    objective = 'EI';
+end
 
 switch MCMCAlgorithm 
     case 'DRAM'
@@ -81,7 +92,15 @@ switch MCMCAlgorithm
         end
 
         % Define Expected improvement as distribution function
-        model.ssfun     = @obj.MCMCDistributionFctDRAM;
+        switch objective
+            case 'EI'
+                model.ssfun     = @obj.MCMCDistributionFctDRAM;
+            case 'Prediction'
+                model.ssfun     = @obj.MCMCDistributionFctPredictionDRAM;
+            otherwise
+                error('Unknown objective')
+        end
+        
         options.method  = 'dram';
         options.waitbar = false;
         options.verbosity = false;
@@ -108,7 +127,15 @@ switch MCMCAlgorithm
                         obj.LBInputVarInterpolation{firstKrigingIndex};
 
         % Define MCMC Distribution function
-        distributionFct = @obj.MCMCDistributionFctSlice;
+        
+        switch objective
+            case 'EI'
+                distributionFct = @obj.MCMCDistributionFctSlice;
+            case 'Prediction'
+                distributionFct = @obj.MCMCDistributionFctPredictionSlice;
+            otherwise
+                error('Unknown objective')
+        end
 
         % Do Slice Sampling
         sampleMatrix = slicesample(randIniSample,...

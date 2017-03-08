@@ -48,6 +48,10 @@ classdef BayesianOptimizationClass<AnalyzeKriging
         % ----------------------------------------------------------------
         [probabilityDensity]=MCMCDistributionFctSlice(obj,varargin)
         % ----------------------------------------------------------------
+        [probabilityDensity]=MCMCDistributionFctPredictionDRAM(obj,varargin)
+        % ----------------------------------------------------------------
+        [probabilityDensity]=MCMCDistributionFctPredictionSlice(obj,varargin)
+        % ----------------------------------------------------------------
         [modEI]=modExpImprByOutputConstr(obj,varargin) 
         %% Get Functions
         function [nMCMCLinks] = getnMCMCLinks(obj)
