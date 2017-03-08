@@ -1,0 +1,322 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>tutorialDesignNewExperimentsMultiObj</title><meta name="generator" content="MATLAB 9.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-03-08"><meta name="DC.source" content="tutorialDesignNewExperimentsMultiObj.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Tutorial: How to use KriKit for Optimization</a></li><li><a href="#2">Test Function</a></li><li><a href="#3">Initial Data Set Objective Optimization</a></li><li><a href="#4">Iterative Optimization</a></li><li><a href="#5">Final Plot: Smooth transition between high Y1 - low Y2 and low Y2 - high Y1 values</a></li></ul></div><h2 id="1">Tutorial: How to use KriKit for Optimization</h2><p>Ignore the next three line:</p><pre class="codeinput">clc
+clear
+close <span class="string">all</span>
+</pre><h2 id="2">Test Function</h2><p>The first function has its minimum at [0,0] an the second function at [3,5]</p><pre class="codeinput">y1 = @(x)4*x(:,1).^2 + 4*x(:,2).^2;
+y2 = @(x)(x(:,1)-5).^2 + (x(:,2)-5).^2;
+nObj = 2;
+
+<span class="comment">% For a better visualization, a fine grid is generated</span>
+nDataFull = 100;
+XFull = createNDGRID([0,0],[5,3],nDataFull);
+Y1Full = y1(XFull);
+Y2Full = y2(XFull);
+</pre><h2 id="3">Initial Data Set Objective Optimization</h2><p>Create First Data Set. We start with this data set and enter the iterative cycle later. The initial experimnetal design is not part of KriKit and has be planed manually. Classic design of experiment can be helpful, i.e. fractional and full factorial design</p><pre class="codeinput">XTest = [5,3;<span class="keyword">...</span>
+         2.5,3;<span class="keyword">...</span>
+         5,0;<span class="keyword">...</span>
+         5,1.5;<span class="keyword">...</span>
+         2.5,1.5;<span class="keyword">...</span>
+         0,3];
+Y1Test = y1(XTest);
+Y2Test = y2(XTest);
+
+<span class="comment">% Data Set for the first objective: Minimum is at [0,0] (No data point is</span>
+<span class="comment">% here so far located) and Maximum is at [5,3] (Here, a data point exists)</span>
+figure
+hold
+surf(unique(XFull(:,1)),unique(XFull(:,2)),reshape(Y1Full,nDataFull,nDataFull)')
+shading(gca,<span class="string">'interp'</span>)
+xlabel(<span class="string">'x1'</span>)
+ylabel(<span class="string">'x2'</span>)
+zlabel(<span class="string">'Y1'</span>)
+set(gca,<span class="string">'FontSize'</span>,20)
+plot3(XTest(:,1),XTest(:,2),Y1Test,<span class="string">'ko'</span>,<span class="string">'MarkerFaceColor'</span>,<span class="string">'r'</span>);
+axis <span class="string">tight</span>
+campos([-21.0178  -14.6555  732.5435])
+
+<span class="comment">% Data Set for the first objective: Minimum is at [5,3] (Here, a data point</span>
+<span class="comment">% exists) and Maximum is at [0,0] (No data point is here so far located)</span>
+figure
+hold
+surf(unique(XFull(:,1)),unique(XFull(:,2)),reshape(Y2Full,nDataFull,nDataFull)')
+shading(gca,<span class="string">'interp'</span>)
+xlabel(<span class="string">'x1'</span>)
+ylabel(<span class="string">'x2'</span>)
+zlabel(<span class="string">'Y2'</span>)
+set(gca,<span class="string">'FontSize'</span>,20)
+plot3(XTest(:,1),XTest(:,2),Y2Test,<span class="string">'ko'</span>,<span class="string">'MarkerFaceColor'</span>,<span class="string">'r'</span>);
+axis <span class="string">tight</span>
+campos([30.2213   18.0547  437.4042])
+
+<span class="comment">% Ideal Pareto Front: Smooth transition between high Y1 - low Y2 and low</span>
+<span class="comment">% Y2 - high Y1 values</span>
+[YPareto]=determineParetoSet_Mex([Y1Full,Y2Full]);
+figure
+plot(YPareto(:,1),YPareto(:,2),<span class="string">'*'</span>)
+xlabel(<span class="string">'Y1'</span>)
+ylabel(<span class="string">'Y2'</span>)
+title(<span class="string">'Ideal Pareto Front'</span>)
+set(gca,<span class="string">'FontSize'</span>,20)
+
+<span class="comment">% Initial Pareto plot. Only a few data point are available, the Pareto</span>
+<span class="comment">% front is poorly approximated.</span>
+figure
+plot(Y1Test,Y2Test,<span class="string">'*'</span>)
+xlabel(<span class="string">'Y1'</span>)
+ylabel(<span class="string">'Y2'</span>)
+title(<span class="string">'Initial Pareto Front'</span>)
+set(gca,<span class="string">'FontSize'</span>,20)
+</pre><pre class="codeoutput">Current plot held
+Current plot held
+</pre><img vspace="5" hspace="5" src="tutorialDesignNewExperimentsMultiObj_01.png" alt=""> <img vspace="5" hspace="5" src="tutorialDesignNewExperimentsMultiObj_02.png" alt=""> <img vspace="5" hspace="5" src="tutorialDesignNewExperimentsMultiObj_03.png" alt=""> <img vspace="5" hspace="5" src="tutorialDesignNewExperimentsMultiObj_04.png" alt=""> <h2 id="4">Iterative Optimization</h2><pre class="codeinput">nIteration = 8;
+<span class="keyword">for</span> iIteration = 1:nIteration
+
+    <span class="comment">% Generate the Kriging model using the current data set</span>
+    krigingObj = BayesianOptimizationClass;
+    krigingObj.addKrigingObject(1,<span class="string">'Y1'</span>)
+    krigingObj.addKrigingObject(1,<span class="string">'Y2'</span>)
+    krigingObj.setMinMax([1,2],[-1,-1])
+    <span class="keyword">for</span> iObj = 1:nObj
+        krigingObj.KrigingObjects{iObj}.setInputData(XTest)
+    <span class="keyword">end</span>
+    krigingObj.KrigingObjects{1}.setOutputData(Y1Test)
+    krigingObj.KrigingObjects{2}.setOutputData(Y2Test)
+    <span class="keyword">for</span> iObj = 1:nObj
+        krigingObj.KrigingObjects{iObj}.setCovariogramModelChoice(6)
+        krigingObj.KrigingObjects{iObj}.setUseMatlabRegressionGP(true)
+        krigingObj.KrigingObjects{iObj}.generateRegressionGPModel
+    <span class="keyword">end</span>
+
+    <span class="comment">% Design 10 new experiments based on Markov Chain and Expected</span>
+    <span class="comment">% Improvement</span>
+    krigingObj.setnNewSamples(10)
+    <span class="comment">% Calculate a Markov-Chain with 1e3 links</span>
+    krigingObj.setnMCMCLinks(1e3)
+    <span class="comment">% Ignore first 1e3 links( algorithm might need some time until it converges)</span>
+    krigingObj.setnCutLinks(1e2)
+    krigingObj.setConsiderOnlyMaxExpectedImprovement(false)
+    krigingObj.determineParetoSet([1,2])
+    newSamplePoint = krigingObj.calcNewSamplesViaMCMC([1,2],<span class="string">'DRAM'</span>);
+
+    XTest = [XTest;newSamplePoint];
+    Y1Test = y1(XTest);
+    Y2Test = y2(XTest);
+
+    <span class="comment">% Plot Intermediate Result</span>
+    figure
+    plot(Y1Test,Y2Test,<span class="string">'*'</span>)
+    xlabel(<span class="string">'Y1'</span>)
+    ylabel(<span class="string">'Y2'</span>)
+    title(sprintf(<span class="string">'Iteration %i'</span>,iIteration))
+    set(gca,<span class="string">'FontSize'</span>,20)
+<span class="keyword">end</span>
+</pre><img vspace="5" hspace="5" src="tutorialDesignNewExperimentsMultiObj_05.png" alt=""> <img vspace="5" hspace="5" src="tutorialDesignNewExperimentsMultiObj_06.png" alt=""> <img vspace="5" hspace="5" src="tutorialDesignNewExperimentsMultiObj_07.png" alt=""> <img vspace="5" hspace="5" src="tutorialDesignNewExperimentsMultiObj_08.png" alt=""> <img vspace="5" hspace="5" src="tutorialDesignNewExperimentsMultiObj_09.png" alt=""> <img vspace="5" hspace="5" src="tutorialDesignNewExperimentsMultiObj_10.png" alt=""> <img vspace="5" hspace="5" src="tutorialDesignNewExperimentsMultiObj_11.png" alt=""> <img vspace="5" hspace="5" src="tutorialDesignNewExperimentsMultiObj_12.png" alt=""> <h2 id="5">Final Plot: Smooth transition between high Y1 - low Y2 and low Y2 - high Y1 values</h2><pre class="codeinput">figure
+plot(Y1Test,Y2Test,<span class="string">'*'</span>)
+xlabel(<span class="string">'Y1'</span>)
+ylabel(<span class="string">'Y2'</span>)
+title(<span class="string">'Final Pareto Front'</span>)
+set(gca,<span class="string">'FontSize'</span>,20)
+</pre><img vspace="5" hspace="5" src="tutorialDesignNewExperimentsMultiObj_13.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Tutorial: How to use KriKit for Optimization
+%
+% Ignore the next three line:
+clc
+clear
+close all
+
+%% Test Function
+% The first function has its minimum at [0,0] an the second function at [3,5]
+y1 = @(x)4*x(:,1).^2 + 4*x(:,2).^2;
+y2 = @(x)(x(:,1)-5).^2 + (x(:,2)-5).^2;
+nObj = 2;
+
+% For a better visualization, a fine grid is generated
+nDataFull = 100;
+XFull = createNDGRID([0,0],[5,3],nDataFull);
+Y1Full = y1(XFull);
+Y2Full = y2(XFull);
+
+
+
+%% Initial Data Set Objective Optimization
+% Create First Data Set. We start with this data set and enter the
+% iterative cycle later. The initial experimnetal design is not part of
+% KriKit and has be planed manually. Classic design of experiment can be
+% helpful, i.e. fractional and full factorial design
+XTest = [5,3;...
+         2.5,3;...
+         5,0;...
+         5,1.5;...
+         2.5,1.5;...
+         0,3];
+Y1Test = y1(XTest);
+Y2Test = y2(XTest);
+
+% Data Set for the first objective: Minimum is at [0,0] (No data point is
+% here so far located) and Maximum is at [5,3] (Here, a data point exists)
+figure
+hold
+surf(unique(XFull(:,1)),unique(XFull(:,2)),reshape(Y1Full,nDataFull,nDataFull)')
+shading(gca,'interp')
+xlabel('x1')
+ylabel('x2')
+zlabel('Y1')
+set(gca,'FontSize',20)
+plot3(XTest(:,1),XTest(:,2),Y1Test,'ko','MarkerFaceColor','r');
+axis tight
+campos([-21.0178  -14.6555  732.5435])
+
+% Data Set for the first objective: Minimum is at [5,3] (Here, a data point
+% exists) and Maximum is at [0,0] (No data point is here so far located)
+figure
+hold
+surf(unique(XFull(:,1)),unique(XFull(:,2)),reshape(Y2Full,nDataFull,nDataFull)')
+shading(gca,'interp')
+xlabel('x1')
+ylabel('x2')
+zlabel('Y2')
+set(gca,'FontSize',20)
+plot3(XTest(:,1),XTest(:,2),Y2Test,'ko','MarkerFaceColor','r');
+axis tight
+campos([30.2213   18.0547  437.4042])
+
+% Ideal Pareto Front: Smooth transition between high Y1 - low Y2 and low
+% Y2 - high Y1 values
+[YPareto]=determineParetoSet_Mex([Y1Full,Y2Full]);
+figure
+plot(YPareto(:,1),YPareto(:,2),'*')
+xlabel('Y1')
+ylabel('Y2')
+title('Ideal Pareto Front')
+set(gca,'FontSize',20)
+
+% Initial Pareto plot. Only a few data point are available, the Pareto
+% front is poorly approximated.
+figure
+plot(Y1Test,Y2Test,'*')
+xlabel('Y1')
+ylabel('Y2')
+title('Initial Pareto Front')
+set(gca,'FontSize',20)
+
+%% Iterative Optimization
+nIteration = 8;
+for iIteration = 1:nIteration
+    
+    % Generate the Kriging model using the current data set
+    krigingObj = BayesianOptimizationClass;
+    krigingObj.addKrigingObject(1,'Y1')
+    krigingObj.addKrigingObject(1,'Y2')
+    krigingObj.setMinMax([1,2],[-1,-1])
+    for iObj = 1:nObj
+        krigingObj.KrigingObjects{iObj}.setInputData(XTest)
+    end
+    krigingObj.KrigingObjects{1}.setOutputData(Y1Test)
+    krigingObj.KrigingObjects{2}.setOutputData(Y2Test)
+    for iObj = 1:nObj
+        krigingObj.KrigingObjects{iObj}.setCovariogramModelChoice(6)
+        krigingObj.KrigingObjects{iObj}.setUseMatlabRegressionGP(true)
+        krigingObj.KrigingObjects{iObj}.generateRegressionGPModel
+    end
+    
+    % Design 10 new experiments based on Markov Chain and Expected
+    % Improvement
+    krigingObj.setnNewSamples(10)
+    % Calculate a Markov-Chain with 1e3 links
+    krigingObj.setnMCMCLinks(1e3)
+    % Ignore first 1e3 links( algorithm might need some time until it converges)
+    krigingObj.setnCutLinks(1e2) 
+    krigingObj.setConsiderOnlyMaxExpectedImprovement(false)
+    krigingObj.determineParetoSet([1,2])
+    newSamplePoint = krigingObj.calcNewSamplesViaMCMC([1,2],'DRAM');
+    
+    XTest = [XTest;newSamplePoint];
+    Y1Test = y1(XTest);
+    Y2Test = y2(XTest);
+    
+    % Plot Intermediate Result
+    figure
+    plot(Y1Test,Y2Test,'*')
+    xlabel('Y1')
+    ylabel('Y2')
+    title(sprintf('Iteration %i',iIteration))
+    set(gca,'FontSize',20)
+end
+
+%% Final Plot: Smooth transition between high Y1 - low Y2 and low Y2 - high Y1 values
+figure
+plot(Y1Test,Y2Test,'*')
+xlabel('Y1')
+ylabel('Y2')
+title('Final Pareto Front')
+set(gca,'FontSize',20)
+##### SOURCE END #####
+--></body></html>

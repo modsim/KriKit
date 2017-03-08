@@ -1,0 +1,236 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>tutorialDesignNewExperimentsSingleObj</title><meta name="generator" content="MATLAB 9.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-03-06"><meta name="DC.source" content="tutorialDesignNewExperimentsSingleObj.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Tutorial: How to use KriKit for Optimization</a></li><li><a href="#2">Test Function</a></li><li><a href="#3">Initial Data Set</a></li><li><a href="#4">Iterative optimization</a></li><li><a href="#5">Final Plot</a></li></ul></div><h2 id="1">Tutorial: How to use KriKit for Optimization</h2><p>Ignore the next three line:</p><pre class="codeinput">clc
+clear
+close <span class="string">all</span>
+</pre><h2 id="2">Test Function</h2><p>This function has a clear minimum at [0,0]</p><pre class="codeinput">y1 = @(x)4*x(:,1).^2 + 4*x(:,2).^2;
+
+<span class="comment">% For a better visualization, a fine grid is generated</span>
+nDataFull = 100;
+XFull = createNDGRID([0,0],[5,3],nDataFull);
+Y1Full = y1(XFull);
+</pre><h2 id="3">Initial Data Set</h2><pre class="codeinput"><span class="comment">% Create First Data Set. We start with this data set and enter the</span>
+<span class="comment">% iterative cycle later. The iniital experimnetal design is not part of</span>
+<span class="comment">% KriKit and has be planed manually. Classic design of experiment can be</span>
+<span class="comment">% helpful, i.e. fractional and full factorial design</span>
+XTest = [5,3;<span class="keyword">...</span>
+         2.5,3;<span class="keyword">...</span>
+         5,0;<span class="keyword">...</span>
+         5,1.5;<span class="keyword">...</span>
+         2.5,1.5;<span class="keyword">...</span>
+         0,3];
+Y1Test = y1(XTest);
+
+<span class="comment">% Visual representation of the intitial experiments. 3D surface is</span>
+<span class="comment">% generated using the brute force generated data see from above</span>
+<span class="comment">% (XFull,YFull). Red dots indicate initial experiments. No experiment near</span>
+<span class="comment">% the optimum.</span>
+figure
+hold
+surf(unique(XFull(:,1)),unique(XFull(:,2)),reshape(Y1Full,nDataFull,nDataFull)')
+shading(gca,<span class="string">'interp'</span>)
+campos([26.2542   28.9225  259.8676])
+xlabel(<span class="string">'x1'</span>)
+ylabel(<span class="string">'x2'</span>)
+set(gca,<span class="string">'FontSize'</span>,20)
+plot3(XTest(:,1),XTest(:,2),Y1Test,<span class="string">'ko'</span>,<span class="string">'MarkerFaceColor'</span>,<span class="string">'r'</span>);
+axis <span class="string">tight</span>
+campos([-23.7404  -16.2737  546.0800])
+</pre><pre class="codeoutput">Current plot held
+</pre><img vspace="5" hspace="5" src="tutorialDesignNewExperimentsSingleObj_01.png" alt=""> <h2 id="4">Iterative optimization</h2><pre class="codeinput">nIteration = 3;
+<span class="keyword">for</span> iIteration = 1:nIteration
+    <span class="comment">% Generate the Kriging model using the current data set</span>
+    krigingObj = BayesianOptimizationClass;
+    krigingObj.addKrigingObject(1,<span class="string">'Y1'</span>)
+    krigingObj.KrigingObjects{1}.setInputData(XTest)
+    krigingObj.KrigingObjects{1}.setOutputData(Y1Test)
+    krigingObj.KrigingObjects{1}.setCovariogramModelChoice(6)
+    krigingObj.KrigingObjects{1}.setUseMatlabRegressionGP(true)
+    krigingObj.KrigingObjects{1}.generateRegressionGPModel
+
+    <span class="comment">% Design 10 new experiments based on Markov Chain and Expected</span>
+    <span class="comment">% Improvement</span>
+    krigingObj.setnNewSamples(10)
+    <span class="comment">% Calculate a Markov-Chain with 1e4 links</span>
+    krigingObj.setnMCMCLinks(1e4)
+    <span class="comment">% Ignore first 1e3 links( algorithm might need some time until it converges)</span>
+    krigingObj.setnCutLinks(1e3)
+    <span class="comment">% Actual Design Process</span>
+    newSamplePoint = krigingObj.calcNewSamplesViaMCMC(1,<span class="string">'DRAM'</span>);
+
+    <span class="comment">% Update Data set</span>
+    XTest = [XTest;newSamplePoint];
+    Y1Test = y1(XTest);
+<span class="keyword">end</span>
+</pre><h2 id="5">Final Plot</h2><p>A high number of experiment are located near the optimum. However, the optimization is robust, as it also considered location that are not optimal but have the potential to be, as the model is here uncertain.</p><pre class="codeinput">figure
+hold
+surf(unique(XFull(:,1)),unique(XFull(:,2)),reshape(Y1Full,nDataFull,nDataFull)')
+shading(gca,<span class="string">'interp'</span>)
+campos([26.2542   28.9225  259.8676])
+xlabel(<span class="string">'x1'</span>)
+ylabel(<span class="string">'x2'</span>)
+set(gca,<span class="string">'FontSize'</span>,20)
+plot3(XTest(:,1),XTest(:,2),Y1Test,<span class="string">'ko'</span>,<span class="string">'MarkerFaceColor'</span>,<span class="string">'r'</span>);
+axis <span class="string">tight</span>
+campos([-23.7404  -16.2737  546.0800])
+</pre><pre class="codeoutput">Current plot held
+</pre><img vspace="5" hspace="5" src="tutorialDesignNewExperimentsSingleObj_02.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Tutorial: How to use KriKit for Optimization
+%
+% Ignore the next three line:
+clc
+clear
+close all
+
+%% Test Function
+% This function has a clear minimum at [0,0]
+y1 = @(x)4*x(:,1).^2 + 4*x(:,2).^2;
+
+% For a better visualization, a fine grid is generated
+nDataFull = 100;
+XFull = createNDGRID([0,0],[5,3],nDataFull);
+Y1Full = y1(XFull);
+
+
+
+%% Initial Data Set 
+
+% Create First Data Set. We start with this data set and enter the
+% iterative cycle later. The iniital experimnetal design is not part of
+% KriKit and has be planed manually. Classic design of experiment can be
+% helpful, i.e. fractional and full factorial design
+XTest = [5,3;...
+         2.5,3;...
+         5,0;...
+         5,1.5;...
+         2.5,1.5;...
+         0,3];
+Y1Test = y1(XTest);
+
+% Visual representation of the intitial experiments. 3D surface is
+% generated using the brute force generated data see from above
+% (XFull,YFull). Red dots indicate initial experiments. No experiment near
+% the optimum.
+figure
+hold
+surf(unique(XFull(:,1)),unique(XFull(:,2)),reshape(Y1Full,nDataFull,nDataFull)')
+shading(gca,'interp')
+campos([26.2542   28.9225  259.8676])
+xlabel('x1')
+ylabel('x2')
+set(gca,'FontSize',20)
+plot3(XTest(:,1),XTest(:,2),Y1Test,'ko','MarkerFaceColor','r');
+axis tight
+campos([-23.7404  -16.2737  546.0800])
+
+%% Iterative optimization
+nIteration = 3;
+for iIteration = 1:nIteration
+    % Generate the Kriging model using the current data set
+    krigingObj = BayesianOptimizationClass;
+    krigingObj.addKrigingObject(1,'Y1')
+    krigingObj.KrigingObjects{1}.setInputData(XTest)
+    krigingObj.KrigingObjects{1}.setOutputData(Y1Test)
+    krigingObj.KrigingObjects{1}.setCovariogramModelChoice(6)
+    krigingObj.KrigingObjects{1}.setUseMatlabRegressionGP(true)
+    krigingObj.KrigingObjects{1}.generateRegressionGPModel
+    
+    % Design 10 new experiments based on Markov Chain and Expected
+    % Improvement
+    krigingObj.setnNewSamples(10)
+    % Calculate a Markov-Chain with 1e4 links
+    krigingObj.setnMCMCLinks(1e4)
+    % Ignore first 1e3 links( algorithm might need some time until it converges)
+    krigingObj.setnCutLinks(1e3) 
+    % Actual Design Process
+    newSamplePoint = krigingObj.calcNewSamplesViaMCMC(1,'DRAM');
+    
+    % Update Data set
+    XTest = [XTest;newSamplePoint];
+    Y1Test = y1(XTest);
+end
+
+%% Final Plot
+% A high number of experiment are located near the optimum. However, the
+% optimization is robust, as it also considered location that are not
+% optimal but have the potential to be, as the model is here uncertain.
+figure
+hold
+surf(unique(XFull(:,1)),unique(XFull(:,2)),reshape(Y1Full,nDataFull,nDataFull)')
+shading(gca,'interp')
+campos([26.2542   28.9225  259.8676])
+xlabel('x1')
+ylabel('x2')
+set(gca,'FontSize',20)
+plot3(XTest(:,1),XTest(:,2),Y1Test,'ko','MarkerFaceColor','r');
+axis tight
+campos([-23.7404  -16.2737  546.0800])
+##### SOURCE END #####
+--></body></html>

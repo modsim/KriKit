@@ -1,6 +1,6 @@
 %% Tutorial: How to visualize data
 %
-%
+% Ignore the next line:
 close all
 
 %% Test Function

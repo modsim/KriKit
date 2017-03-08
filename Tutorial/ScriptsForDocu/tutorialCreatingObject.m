@@ -1,6 +1,6 @@
 %% Tutorial: How to create a Kriging Object
 %
-%
+% Ignore the next line:
 function [KrigingObj] = tutorialCreatingObject(varargin)
 %% Initialisierung
 
