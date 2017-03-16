@@ -24,7 +24,7 @@ function varargout = dialogInterpolationGUI(varargin)
 
 % Edit the above text to modify the response to help dialogInterpolationGUI
 
-% Last Modified by GUIDE v2.5 22-Jan-2015 16:17:46
+% Last Modified by GUIDE v2.5 15-Mar-2017 16:52:51
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -193,3 +193,11 @@ end
 %  your option, any later version) which accompanies this distribution, and
 %  is available at http://www.gnu.org/licenses/gpl.html
 % =============================================================================
+
+
+% --- If Enable == 'on', executes on mouse press in 5 pixel border.
+% --- Otherwise, executes on mouse press in 5 pixel border or over popupmenu1.
+function popupmenu1_ButtonDownFcn(hObject, eventdata, handles)
+% hObject    handle to popupmenu1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)

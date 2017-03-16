@@ -24,7 +24,7 @@ function varargout = dialogInterpolation(varargin)
 
 % Edit the above text to modify the response to help dialogInterpolation
 
-% Last Modified by GUIDE v2.5 03-Jul-2015 13:46:23
+% Last Modified by GUIDE v2.5 15-Mar-2017 16:54:31
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -170,9 +170,9 @@ function [handles]=initializeND_Interpolation_Dialog(handles)
     % the input variable which discrete varied. The remainining columns
     % represent input variables which stays constant of the interpolation
     handles.InputVarIndiceMatrix = ones(handles.nRows,nInputVar);
-    for iVar=2:nInputVar
-        handles.InputVarIndiceMatrix(:,iVar)=iVar;
-    end
+%     for iVar=2:nInputVar
+%         handles.InputVarIndiceMatrix(:,iVar)=iVar;
+%     end
     
     % InputVarValueMatrix saves concrete values for the input variable
     % which are used when they are fix over the interpolation. The
@@ -286,6 +286,7 @@ index1 = find(index1==1);
 
 % Potential index of input variables
 indicesWhichCouldBechosen = 1:handles.KrigingAnalysisObj.KrigingObjects{handles.currentObj}.getnInputVar;
+indicesNotChosen = indicesWhichCouldBechosen;
 
 % Takes all the indices which are not yet already chosen by the popMenue
 switch handles.InterpolationType
@@ -313,6 +314,7 @@ currentRow = get(handles.popupmenuCurrentRow,'Value');
 
 % Collect information for the entries in the table
 for iVar=1:length(strNames)-(handles.InterpolationType-1)
+% for iVar=1:length(strNames)
     dataIni{iVar,1} = strNames{indicesNotChosen(iVar)};
     
     if handles.InterpolationType==4 % nD-plot
@@ -358,8 +360,9 @@ for iIndex=setdiff(1:handles.InterpolationType-1,popMenuIndex)
     index2(runIndex) = find(strcmp(str{iIndex}{val(iIndex)},strNames)==1);
     runIndex = runIndex+1;
 end
-index2 = unique(index2);
-indices = setdiff(1:length(strNames),index2);
+% index2 = unique(index2);
+% indices = setdiff(1:length(strNames),index2);
+indices = 1:length(strNames);
 
 
 % --- Executes on button press in checkboxBestData.
@@ -482,8 +485,11 @@ for iIndex = totalIndices
     InputVarPopupValueMatrix(iIndex,currentRow) = get(popUps{iIndex},'Value');
 end
 % Fill up the remaining part
-InputVarIndiceMatrix(currentRow,4:end) =...
+InputVarIndiceMatrix(currentRow,4:end) = ...
                 setdiff(1:nInputVar,InputVarIndiceMatrix(currentRow,1:3));
+% InputVarIndiceMatrix(currentRow,1:end) = 1:nInputVar;
+% InputVarIndiceMatrix(currentRow,1:end) = ...
+%                 setdiff(1:nInputVar,InputVarIndiceMatrix(currentRow,1:3));            
     
     
 
@@ -571,11 +577,17 @@ if get(handles.checkboxContourPlot,'Value')&&get(handles.checkboxDisplayOptimum,
     errordlg(horzcat('Uncheck either "',get(handles.checkboxContourPlot,'String'),'" or "',get(handles.checkboxDisplayOptimum,'String'),'"'))
     error(horzcat('Uncheck either "',get(handles.checkboxContourPlot,'String'),'" or "',get(handles.checkboxDisplayOptimum,'String'),'"'))
 end
-    
+
+
 switch handles.InterpolationType
     case 2
         chosenIndices = indicesWhichCouldBechosen1(val1);
 
+        if length(unique(chosenIndices))~= length(chosenIndices)
+            errordlg('Indices of input variable are not unique')
+            error('Indices of input variable are not unique')
+        end
+        
         indicesRemainingInputVar = setdiff(1:nInputVar,chosenIndices);
         data = get(handles.uitableInputParameters,'Data');
         for iVar=1:nInputVar-1
@@ -602,6 +614,11 @@ switch handles.InterpolationType
     case 3
         chosenIndices = [indicesWhichCouldBechosen1(val1),indicesWhichCouldBechosen2(val2)];
 
+        if length(unique(chosenIndices))~= length(chosenIndices)
+            errordlg('Indices of input variable are not unique')
+            error('Indices of input variable are not unique')
+        end
+        
         indicesRemainingInputVar = setdiff(1:nInputVar,chosenIndices);
         data = get(handles.uitableInputParameters,'Data');
         for iVar=1:nInputVar-2
@@ -641,7 +658,11 @@ switch handles.InterpolationType
         
         
     case 4
-       
+        if length(unique(handles.InputVarIndiceMatrix(:,1:3)))~= length(handles.InputVarIndiceMatrix(:,1:3))
+            errordlg('Indices of input variable are not unique')
+            error('Indices of input variable are not unique')
+        end
+        
         valuesRemainingInputVarValues = zeros(handles.nRows,nInputVar-3);
         for iVar=1:handles.nRows
             valuesRemainingInputVarValues(iVar,:) = handles.InputVarValueMatrix(iVar,handles.InputVarIndiceMatrix(iVar,4:end));
@@ -1018,3 +1039,11 @@ function uitableMinMaxVar_CreateFcn(hObject, eventdata, handles)
 %  your option, any later version) which accompanies this distribution, and
 %  is available at http://www.gnu.org/licenses/gpl.html
 % =============================================================================
+
+
+% --- If Enable == 'on', executes on mouse press in 5 pixel border.
+% --- Otherwise, executes on mouse press in 5 pixel border or over popupmenuInVar1.
+function popupmenuInVar1_ButtonDownFcn(hObject, eventdata, handles)
+% hObject    handle to popupmenuInVar1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)

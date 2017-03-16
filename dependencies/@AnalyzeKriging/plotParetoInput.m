@@ -46,8 +46,8 @@ function [] = plotParetoInput(obj,varargin)
     nInputVar = length(inputIndices);
     
     % Test Input
-    if (nInputVar~=2&&nInputVar~=3)||~any(size(inputIndices)==1)
-        error('InputIndices has to be an one-dimensional array of size 2 or 3')
+    if (nInputVar~=1&&nInputVar~=2&&nInputVar~=3)||~any(size(inputIndices)==1)
+        error('InputIndices has to be an one-dimensional array of size 1, 2, or 3')
     end
     
     if obj.nParetoSetExperiments<=0
@@ -71,7 +71,11 @@ function [] = plotParetoInput(obj,varargin)
     
     % Add legend
     warning('off','MATLAB:legend:IgnoringExtraEntries')
-    legend('Non-optimal Sample Points','Optimal Sample Points','Trajectory')
+    if nInputVar
+        legend('Optimal Sample Points','Trajectory')
+    else
+        legend('Non-optimal Sample Points','Optimal Sample Points','Trajectory')
+    end
     warning('on','MATLAB:legend:IgnoringExtraEntries')
 %% Nested Functions
 % ---------------------------------------------------------------------
@@ -85,6 +89,16 @@ function [inputSorted]=plotDataPoints()
     
     % Actual Plotting
     switch nInputVar
+    case 1
+        % Mark pareto optimal
+        nPareto = length(obj.ParetoValuesInput(:,inputIndices(1)));
+        plot(1:nPareto,...
+             inputSorted(:,inputIndices(1)),...
+             'kO','MarkerFaceColor',colorOptimal,'MarkerSize',12);
+        stairs(1:nPareto,...
+             inputSorted(:,inputIndices(1)),...
+             'k','LineWidth',2);
+        set(gca,'XTick',1:nPareto)
     case 2
         if obj.ShowData==1
             % All data
@@ -152,16 +166,30 @@ end
 % ----------------------------------------------------------------------
     function []=labelAxes()
         if isempty(obj.InputVarNames{krigingObjectIndex(1)})
-            xlabel(horzcat('Input Variable ',num2str(inputIndices(1))),'FontSize',20);
-            ylabel(horzcat('Input Variable ',num2str(inputIndices(2))),'FontSize',20);
-            if nInputVar>2
-                zlabel(horzcat('Input Variable ',num2str(inputIndices(3))),'FontSize',20);
+            switch nInputVar
+                case 1
+                    xlabel('Point Number','FontSize',20)
+                    xlabel(horzcat('Input Variable ',num2str(inputIndices(1))),'FontSize',20);
+                case {2,3}
+                    xlabel(horzcat('Input Variable ',num2str(inputIndices(1))),'FontSize',20);
+                    ylabel(horzcat('Input Variable ',num2str(inputIndices(2))),'FontSize',20);
+                    if nInputVar>2
+                        zlabel(horzcat('Input Variable ',num2str(inputIndices(3))),'FontSize',20);
+                    end
             end
         else
-            xlabel(obj.InputVarNames{krigingObjectIndex(1)}(inputIndices(1)),'FontSize',20);
-            ylabel(obj.InputVarNames{krigingObjectIndex(1)}(inputIndices(2)),'FontSize',20);
-            if nInputVar>2
-                zlabel(obj.InputVarNames{krigingObjectIndex(1)}(inputIndices(3)),'FontSize',20);
+            
+            switch nInputVar
+                case 1
+                    xlabel('Point Number','FontSize',20)
+                    inputNames = obj.getInputVarNames(krigingObjectIndex(1));
+                    ylabel(inputNames(inputIndices(1)),'FontSize',20)
+                case {2,3}
+                    xlabel(obj.InputVarNames{krigingObjectIndex(1)}(inputIndices(1)),'FontSize',20);
+                    ylabel(obj.InputVarNames{krigingObjectIndex(1)}(inputIndices(2)),'FontSize',20);
+                    if nInputVar>2
+                        zlabel(obj.InputVarNames{krigingObjectIndex(1)}(inputIndices(3)),'FontSize',20);
+                    end
             end
         end
     end

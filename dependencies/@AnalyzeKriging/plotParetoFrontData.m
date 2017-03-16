@@ -56,6 +56,7 @@ function [nObj,outputMatrix] = initializeAndCheckInput(krigingObjectIndex)
     for iObjNested = 1:nObj
         outputMatrix(:,iObjNested) = obj.KrigingObjects{krigingObjectIndex(iObjNested)}.getOutputData;
     end
+    outputMatrix = bsxfun(@times,outputMatrix,obj.getMinMax(krigingObjectIndex));
 end
 % -------------------------------------------------------------------------
 function []=numerateSamples(nObj,paretoSamples)
@@ -87,7 +88,8 @@ function [HandlingSamples,HandlingSamplesOptimal,paretoSamples]=sortAndPlot(data
     end
     
     % Sort ParetoSet allong th x-axis
-    paretoSamples = sortrows(obj.ParetoSetExperiments);
+    paretoSamples = bsxfun(@times,obj.ParetoSetExperiments,obj.getMinMax(krigingObjectIndex));
+    paretoSamples = sortrows(paretoSamples);
     
     % Connect pareto points by a "stair" indicating dominated and non
     % domiated are
