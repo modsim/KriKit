@@ -26,7 +26,7 @@ function []=setLBUBInputVarInterpolation(obj,KrigingObjectIndex,LBUBInputVarInte
     end
 
     
-
+    defineBoundOfInputVar(obj,KrigingObjectIndex);
     switch LBorUB
         case -1
             obj.LBInputVarInterpolation{KrigingObjectIndex} = LBUBInputVarInterpolation;
