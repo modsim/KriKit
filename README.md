@@ -21,5 +21,5 @@ KriKit was implemented and tested using Matlab(2015b). KriKit is freely distribu
 Download the [latest release](https://github.com/modsim/KriKit/releases)
 
 ## Documentation
-Documentation is in progress.
+The toolbox contains a detailed documentation how to use its function via command prompt.
 
